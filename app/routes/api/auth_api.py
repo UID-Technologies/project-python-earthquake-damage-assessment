@@ -65,7 +65,7 @@ def login():
 def signup():
     """
     User registration endpoint
-    New users are created with 'inactive' status and require admin approval
+    New users are created with 'active' status and can login immediately
     """
     data = request.get_json()
 
@@ -77,7 +77,7 @@ def signup():
     password = data.get("password")
     role = "user"
     organization_id = 1
-    status = "inactive"
+    status = "active"
 
     if not all([name, email, username, password]):
         return jsonify({"success": False, "message": "Missing required fields"}), 400

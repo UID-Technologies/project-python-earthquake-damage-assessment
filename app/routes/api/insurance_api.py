@@ -130,7 +130,7 @@ def get_all_user_claims():
                     END as claim_recommended
                 FROM claims c
                 LEFT JOIN insurance i ON c.insurance_id = i.insurance_code
-                LEFT JOIN claims_value cv ON c.claims_code = cv.claims_code
+                LEFT JOIN claims_value cv ON c.id = cv.claims_id
                 WHERE c.user_id = %s 
                 ORDER BY c.created_at DESC
             """
@@ -208,6 +208,29 @@ def get_assessment_data():
             """
             cursor.execute(sql, (claims_code,))
             assessment_data = cursor.fetchone()
+            
+            # Check for processed/analyzed image (crack detection result)
+            if assessment_data and assessment_data.get('file_name'):
+                upload_folder = current_app.config.get('UPLOAD_FOLDER', 'app/static/upload_image')
+                original_name = assessment_data['file_name']
+                
+                # Look for processed image with pattern: crack_detection_result_small_*.png
+                # These are generated during AI analysis
+                if 'crack_detection_result_small_' in original_name:
+                    # Already a processed image
+                    assessment_data['processed_image'] = original_name
+                else:
+                    # Check if processed version exists
+                    import glob
+                    pattern = os.path.join(upload_folder, 'crack_detection_result_small_*.png')
+                    processed_files = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+                    
+                    if processed_files:
+                        # Return the most recent processed image
+                        processed_filename = os.path.basename(processed_files[0])
+                        assessment_data['processed_image'] = processed_filename
+                    else:
+                        assessment_data['processed_image'] = original_name
         
         return jsonify({
             "success": True,
@@ -222,7 +245,7 @@ def get_assessment_data():
 @insurance_api_bp.route("/claims/submit-final", methods=["POST"])
 @jwt_required()
 def submit_final_claim():
-    """Submit final claim with property details, images, and analysis results"""
+    """Submit final claim with all steps data - creates claim record and adds property details, images, and analysis"""
     from werkzeug.utils import secure_filename
     import os
     import time
@@ -233,7 +256,18 @@ def submit_final_claim():
     try:
         # Get form data
         data = request.form
+        
+        # Step 1: Basic claim info
+        user_id = data.get('user_id')
+        insurance_code = data.get('insurance_code')
+        policy_number = data.get('policy_number')
         claims_code = data.get('claims_code')
+        claim_details = data.get('claim_details', '')
+        time_of_loss = data.get('time_of_loss', '')
+        situation_of_loss = data.get('situation_of_loss', '')
+        cause_of_loss = data.get('cause_of_loss', '')
+        
+        # Step 3: Property details
         property_type = data.get('property_type')
         wall_type = data.get('wall_type')
         damage_area = float(data.get('damage_area', 0))
@@ -242,28 +276,61 @@ def submit_final_claim():
         damage_height = float(data.get('damage_height', 1))
         rate_per_sqft = float(data.get('rate_per_sqft', 350))
         
-        # Get images
+        # Step 2: Get images
         images = request.files.getlist('images')
         
+        # Step 4: Get manual overrides (if any)
+        manual_overrides_json = data.get('manual_overrides')
+        manual_overrides = {}
+        if manual_overrides_json:
+            try:
+                import json
+                overrides_list = json.loads(manual_overrides_json)
+                # Create a dict indexed by image_index for easy lookup
+                for override in overrides_list:
+                    manual_overrides[override['image_index']] = override
+            except Exception as e:
+                current_app.logger.error(f"Error parsing manual overrides: {e}")
+        
+        # Validation
         if not claims_code:
             return jsonify({"success": False, "error": "Claims code is required"}), 400
+        if not user_id:
+            return jsonify({"success": False, "error": "User ID is required"}), 400
+        if not insurance_code:
+            return jsonify({"success": False, "error": "Insurance code is required"}), 400
+        if not policy_number:
+            return jsonify({"success": False, "error": "Policy number is required"}), 400
         
         with conn.cursor() as cursor:
-            # Get claims_id
+            # Verify user ownership
+            cursor.execute("SELECT id FROM users WHERE username = %s", (user_identity,))
+            user_row = cursor.fetchone()
+            if not user_row or str(user_row['id']) != str(user_id):
+                return jsonify({"success": False, "error": "Unauthorized"}), 403
+            
+            # Check if claim already exists
             cursor.execute("SELECT id, user_id FROM claims WHERE claims_code = %s", (claims_code,))
             claim_row = cursor.fetchone()
             
-            if not claim_row:
-                return jsonify({"success": False, "error": "Claim not found"}), 404
-            
-            claims_id = claim_row['id']
-            claim_user_id = claim_row['user_id']
-            
-            # Verify ownership
-            cursor.execute("SELECT id FROM users WHERE username = %s", (user_identity,))
-            user_row = cursor.fetchone()
-            if not user_row or user_row['id'] != claim_user_id:
-                return jsonify({"success": False, "error": "Unauthorized"}), 403
+            if claim_row:
+                # Claim exists, verify ownership
+                claims_id = claim_row['id']
+                if str(claim_row['user_id']) != str(user_id):
+                    return jsonify({"success": False, "error": "Unauthorized - claim belongs to another user"}), 403
+            else:
+                # Create new claim record
+                sql_claim = """
+                    INSERT INTO claims
+                    (user_id, claims_code, insurance_id, claim_details, time_of_loss, 
+                     situation_of_loss, cause_of_loss, policy_number, is_active, status, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 'inactive', %s)
+                """
+                cursor.execute(sql_claim, (
+                    user_id, claims_code, insurance_code, claim_details,
+                    time_of_loss, situation_of_loss, cause_of_loss, policy_number, user_id
+                ))
+                claims_id = cursor.lastrowid
             
             # Insert into claim_property_details
             sql_property = """
@@ -286,7 +353,7 @@ def submit_final_claim():
             analysis_count = 0
             total_confidence = 0
             
-            for image_file in images:
+            for image_index, image_file in enumerate(images):
                 if image_file and image_file.filename:
                     # Save image
                     filename = secure_filename(image_file.filename)
@@ -295,25 +362,47 @@ def submit_final_claim():
                     filepath = os.path.join(upload_folder, unique_filename)
                     image_file.save(filepath)
                     
+                    # Check if there's a manual override for this image
+                    override_data = manual_overrides.get(image_index)
+                    
                     # Run AI analysis
                     try:
-                        from app.routes.earthquake_detection import e_detect_earthquake
-                        from app.routes.image_area_calculater import calculate_crack_area
-                        
-                        # AI Detection
-                        with open(filepath, 'rb') as img_file:
-                            response, status_code = e_detect_earthquake(img_file)
-                            detection_data = response.json
-                            confidence = detection_data.get("confidence", 0)
-                            crack_percent = detection_data.get("probabilities", {}).get("Positive (Crack Detected)", 0)
-                            non_crack_percent = detection_data.get("probabilities", {}).get("Negative (No Crack)", 0)
-                            ai_decision = detection_data.get("predicted_class", "Unknown")
-                        
-                        # Crack area calculation
-                        image_response = calculate_crack_area(filepath)
-                        crack_area = image_response.get('crack_area', 0)
-                        crack_length = image_response.get('length_ft', 0)
-                        crack_width = image_response.get('width_ft', 0)
+                        if override_data and override_data.get('is_override'):
+                            # Use manual override values
+                            confidence = override_data.get('confidence', 0)
+                            ai_decision = override_data.get('ai_decision', 'Unknown')
+                            crack_length = override_data.get('length_ft', 0)
+                            crack_width = override_data.get('width_ft', 0)
+                            crack_area = override_data.get('area_sqft', 0)
+                            
+                            # Set crack percentages based on decision
+                            if override_data.get('crack_detected'):
+                                crack_percent = confidence
+                                non_crack_percent = 100 - confidence
+                            else:
+                                crack_percent = 0
+                                non_crack_percent = confidence
+                            
+                            current_app.logger.info(f"Using manual override for image {image_index}: {ai_decision}")
+                        else:
+                            # Use AI analysis
+                            from app.routes.earthquake_detection import e_detect_earthquake
+                            from app.routes.image_area_calculater import calculate_crack_area
+                            
+                            # AI Detection
+                            with open(filepath, 'rb') as img_file:
+                                response, status_code = e_detect_earthquake(img_file)
+                                detection_data = response.json
+                                confidence = detection_data.get("confidence", 0)
+                                crack_percent = detection_data.get("probabilities", {}).get("Positive (Crack Detected)", 0)
+                                non_crack_percent = detection_data.get("probabilities", {}).get("Negative (No Crack)", 0)
+                                ai_decision = detection_data.get("predicted_class", "Unknown")
+                            
+                            # Crack area calculation
+                            image_response = calculate_crack_area(filepath)
+                            crack_area = image_response.get('crack_area', 0)
+                            crack_length = image_response.get('length_ft', 0)
+                            crack_width = image_response.get('width_ft', 0)
                         
                         total_crack_area += crack_area
                         total_confidence += confidence
@@ -353,10 +442,10 @@ def submit_final_claim():
             # Save to claims_value
             sql_value = """
                 INSERT INTO claims_value
-                (claims_id, claims_code, claim_recommended)
-                VALUES (%s, %s, %s)
+                (claims_id, claim_recommended)
+                VALUES (%s, %s)
             """
-            cursor.execute(sql_value, (claims_id, claims_code, claim_recommended))
+            cursor.execute(sql_value, (claims_id, claim_recommended))
             
             # Update claim status to active
             cursor.execute(

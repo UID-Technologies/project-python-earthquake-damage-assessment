@@ -1,177 +1,336 @@
 {% extends "base.html" %}
 
-{% block title %}Damaged Property Details{% endblock %}
+{% block title %}Claim Report - Proclaim{% endblock %}
 
 {% block content %}
-<div class="claim-wise-page">
-  <h1 class="cw-header">Claim Wise Report</h1>
-  <form class="cw-form" method="POST" action="/submit_claim_report">
-    <input type="hidden" name="claims_id"  value="{{claims_id}}"/>
-    <input type="hidden" name="claim_property_details_id"  value="{{claim_property_details_id}}"/>
-    <input type="hidden" name="claims_code" value="{{claims_code}}" />
-    <input type="hidden" name="cpa_id" id="cpa_id"/>
-    <div class="cw-row">
-      <!-- Left column -->
-      <div class="cw-col">
-        <label for="insuranceCode" class="input-label">Insurance Code</label>
-        <select id="insuranceCode" class="cw-input" name="insurance_code" required>
-            <option value="">Select Insurance Code</option>
-            {% for ins in all_insurance_code %}
-                <option value="{{ ins.insurance_code }}" {% if get_select_insurance_code_one and ins.insurance_code == get_select_insurance_code_one.insurance_id %}selected{% endif %}>{{ ins.insurance_code }}</option>
-            {% endfor %}
-            </select>
-
-        <label for="aiResponse" class="input-label" style="margin-top:1rem;">AI Response Accepted?</label>
-        <select id="aiResponse" class="cw-input" name="user_inference" required>
-            <option value="">Select Option</option>
-            <option value="yes" {% if request.args.get('user_inference', '') == 'yes' %}selected{% endif %}>Yes</option>
-            <option value="no" {% if request.args.get('user_inference', '') == 'no' %}selected{% endif %}>No</option>
-        </select>
+<div class="animate-fade-in max-w-7xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Claim Assessment Report</h1>
+        <p class="mt-1 text-sm text-gray-600">Review and submit your claim assessment details</p>
       </div>
-
-      <!-- Middle column -->
-      <div class="cw-col">
-        <label for="policyCode" class="input-label">Policy Code</label>
-        <select id="policyCode" class="cw-input" name="policy_code" required>
-            <option value="">Select Policy Code</option>
-            {% if get_select_policy_number_one %}
-                <option value="{{ get_select_policy_number_one.policy_number }}" selected>{{ get_select_policy_number_one.policy_number }}</option>
-            {% endif %}
-        </select>
-
-        <div class="cw-col-single">
-          <div class="cw-image-box-crack">
-            <img id="assessmentImage" src="" alt="Detected Crack" class="img-fluid" width="300" height="300" />
-          </div>
-        </div>
-        <div id="finalDamageInputs" style="display: none;">
-            <label for="finalDamageArea" class="input-label" style="margin-top:1rem;">Final Damage Area</label>
-            <input type="text" id="finalDamageArea" class="cw-input" name="final_damage_area"
-                placeholder="Final Damage Area"
-                value="{{ request.args.get('final_damage_area', '') }}" />
-
-            <label for="finaldamageCost" class="input-label">Final Damage Cost</label>
-            <input type="text" id="finaldamageCost" class="cw-input" name="final_damage_cost"
-                placeholder="Final Damage Cost"
-                value="{{ request.args.get('final_damage_cost', '') }}" />
-      </div>
-         <button type="submit" id="submitButton" class="cw-submit-btn">Submit</button>
-      </div>
-
-      <!-- Right column -->
-      <div class="cw-col cw-col-wide">
-        <label for="claimCode" class="input-label">Claim Code</label>
-        <select id="claimCode" class="cw-input" name="claim_code" required>
-        <option value="">Select Claim Code</option>
-        {% if get_select_claims_code_one %}
-            <option value="{{ get_select_claims_code_one.claims_code }}" selected>{{ get_select_claims_code_one.claims_code }}</option>
-        {% endif %}
-        </select>
-
-        <label for="aiDecision" class="input-label">AI Decision</label>
-        <input type="text" id="aiDecision" class="cw-input" name="ai_decision" placeholder="AI Decision" readonly/>
-
-        <label for="confidenceLevel" class="input-label">Confidence Level</label>
-        <input type="text" id="confidenceLevel" class="cw-input" name="confidence_level" placeholder="Confidence Level" readonly/>
-
-        <label for="recommendedClaim" class="input-label">Recommended Claim Amount</label>
-        <input type="text" id="recommendedClaim" class="cw-input" name="recommended_claim_amount" placeholder="Recommended Claim Amount" readonly/>
-
-        <label for="lengthFt" class="input-label">Length (in Ft)</label>
-        <input type="text" id="lengthFt" class="cw-input" name="length_ft" placeholder="Length (in Ft)" readonly/>
-
-        <label for="breadthFt" class="input-label">Breadth (in Ft)</label>
-        <input type="text" id="breadthFt" class="cw-input" name="breadth_ft" placeholder="Breadth (in Ft)" readonly/>
-
-        <label for="areaSqft" class="input-label">Area (in SqFt)</label>
-        <input type="text" id="areaSqft" class="cw-input" name="area_sqft" placeholder="Area (in SqFt)" readonly/>
-
-        <!-- <label for="distance" class="input-label">Distance</label>
-        <input type="text" id="distance" class="cw-input" name="distance" placeholder="Distance" /> -->
+      <div class="mt-4 md:mt-0">
+        <a href="/claims" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Back to Claims
+        </a>
       </div>
     </div>
-  </form>
+  </div>
+
+  <!-- View-only report - No form submission -->
+  <div id="reportView">
+    <input type="hidden" id="claims_id" value="{{claims_id}}"/>
+    <input type="hidden" id="claim_property_details_id" value="{{claim_property_details_id}}"/>
+    <input type="hidden" id="claims_code" value="{{claims_code}}" />
+    <input type="hidden" id="cpa_id"/>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Left Column - Selection & AI Response -->
+      <div class="lg:col-span-1 space-y-6">
+        
+        <!-- Policy Selection Card -->
+        <div class="bg-white shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-4">
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fas fa-file-contract mr-2"></i>
+              Policy Information
+            </h2>
+          </div>
+          
+          <div class="p-5 space-y-4">
+            <!-- Insurance Code -->
+            <div>
+              <label for="insuranceCode" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-building text-blue-600 mr-1"></i>
+                Insurance Code
+                <span class="text-red-500">*</span>
+              </label>
+              <select id="insuranceCode" name="insurance_code" required
+                class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+            <option value="">Select Insurance Code</option>
+            {% for ins in all_insurance_code %}
+                  <option value="{{ ins.insurance_code }}" 
+                    {% if get_select_insurance_code_one and ins.insurance_code == get_select_insurance_code_one.insurance_id %}selected{% endif %}>
+                    {{ ins.insurance_code }}
+                  </option>
+            {% endfor %}
+            </select>
+            </div>
+
+            <!-- Policy Code -->
+            <div>
+              <label for="policyCode" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-shield-alt text-blue-600 mr-1"></i>
+                Policy Number
+                <span class="text-red-500">*</span>
+              </label>
+              <select id="policyCode" name="policy_code" required
+                class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                <option value="">Select Policy Number</option>
+                {% if get_select_policy_number_one %}
+                  <option value="{{ get_select_policy_number_one.policy_number }}" selected>
+                    {{ get_select_policy_number_one.policy_number }}
+                  </option>
+                {% endif %}
+        </select>
+      </div>
+
+            <!-- Claim Code -->
+            <div>
+              <label for="claimCode" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-hashtag text-blue-600 mr-1"></i>
+                Claim Code
+                <span class="text-red-500">*</span>
+              </label>
+              <select id="claimCode" name="claim_code" required
+                class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                <option value="">Select Claim Code</option>
+                {% if get_select_claims_code_one %}
+                  <option value="{{ get_select_claims_code_one.claims_code }}" selected>
+                    {{ get_select_claims_code_one.claims_code }}
+                  </option>
+            {% endif %}
+        </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Response Card -->
+        <div class="bg-white shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-4">
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fas fa-robot mr-2"></i>
+              AI Assessment Response
+            </h2>
+          </div>
+          
+          <div class="p-5 space-y-4">
+            <!-- AI Response Accepted -->
+            <div>
+              <label for="aiResponse" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-check-circle text-purple-600 mr-1"></i>
+                Do you accept AI response?
+                <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="text" id="aiResponse" readonly
+                  placeholder="Loading..."
+                  class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-gray-50 text-gray-700 font-medium" />
+                <div id="aiResponseBadge" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
+                  <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold"></span>
+                </div>
+              </div>
+              <p class="mt-2 text-xs text-gray-500">
+                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                Assessment acceptance status
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Middle Column - Image Display -->
+      <div class="lg:col-span-1">
+        <div class="bg-white shadow-lg overflow-hidden h-full">
+          <div class="bg-gradient-to-r from-green-600 to-teal-600 px-5 py-4">
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fas fa-brain mr-2"></i>
+              AI Analyzed Image
+            </h2>
+          </div>
+          
+          <div class="p-5">
+            <div class="bg-gray-900 border-2 border-gray-700 flex items-center justify-center overflow-hidden" style="min-height: 400px;">
+              <img id="assessmentImage" src="" alt="AI Crack Detection Analysis" 
+                class="max-w-full max-h-full object-contain hidden" />
+              <div id="imagePlaceholder" class="text-center p-6">
+                <i class="fas fa-brain text-gray-600 text-5xl mb-3"></i>
+                <p class="text-sm text-gray-400 font-medium">No Analysis Available</p>
+                <p class="text-xs text-gray-500 mt-1">AI processed image will appear here</p>
+              </div>
+            </div>
+            
+            <div class="mt-4 bg-green-50 border-l-4 border-green-500 p-3">
+              <p class="text-xs text-green-800 font-semibold flex items-center">
+                <i class="fas fa-robot mr-1"></i>
+                AI-Processed Detection Result
+              </p>
+              <p class="text-xs text-green-700 mt-1">
+                This image shows the original photo alongside the AI crack detection overlay with measured dimensions
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Assessment Details -->
+      <div class="lg:col-span-1">
+        <div class="bg-white shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4">
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fas fa-clipboard-check mr-2"></i>
+              Assessment Details
+            </h2>
+          </div>
+          
+          <div class="p-5 space-y-4">
+            
+            <!-- AI Decision -->
+            <div>
+              <label for="aiDecision" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-brain text-indigo-600 mr-1"></i>
+                AI Decision
+              </label>
+              <div class="relative">
+                <input type="text" id="aiDecision" name="ai_decision" readonly
+                  placeholder="Waiting for data..."
+                  class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-gray-50 text-gray-700 font-medium" />
+                <div id="aiDecisionBadge" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
+                  <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confidence Level -->
+            <div>
+              <label for="confidenceLevel" class="block text-xs font-semibold text-gray-700 mb-2">
+                <i class="fas fa-percentage text-indigo-600 mr-1"></i>
+                Confidence Level
+              </label>
+              <div class="relative">
+                <input type="text" id="confidenceLevel" name="confidence_level" readonly
+                  placeholder="Waiting for data..."
+                  class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-gray-50 text-gray-700 font-medium" />
+                <div id="confidenceBar" class="hidden mt-2 bg-gray-200 h-2 overflow-hidden">
+                  <div id="confidenceProgress" class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-gray-200 pt-4"></div>
+
+            <!-- Dimensions Section -->
+            <div class="bg-gray-50 border border-gray-200 p-4 space-y-3">
+              <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center">
+                <i class="fas fa-ruler-combined text-gray-600 mr-2"></i>
+                Damage Dimensions
+              </h3>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="lengthFt" class="block text-xs font-medium text-gray-600 mb-1">
+                    Length (ft)
+                  </label>
+                  <input type="text" id="lengthFt" name="length_ft" readonly
+                    placeholder="0.00"
+                    class="w-full px-2 py-2 text-sm border border-gray-300 bg-white text-gray-700 text-center font-semibold" />
+                </div>
+
+                <div>
+                  <label for="breadthFt" class="block text-xs font-medium text-gray-600 mb-1">
+                    Width (ft)
+                  </label>
+                  <input type="text" id="breadthFt" name="breadth_ft" readonly
+                    placeholder="0.00"
+                    class="w-full px-2 py-2 text-sm border border-gray-300 bg-white text-gray-700 text-center font-semibold" />
+                </div>
+              </div>
+
+              <div>
+                <label for="areaSqft" class="block text-xs font-medium text-gray-600 mb-1">
+                  Total Area (sq ft)
+                </label>
+                <input type="text" id="areaSqft" name="area_sqft" readonly
+                  placeholder="0.00"
+                  class="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white text-gray-700 text-center font-bold" />
+              </div>
+            </div>
+
+            <!-- Recommended Claim -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-4">
+              <label for="recommendedClaim" class="block text-xs font-semibold text-green-800 mb-2">
+                <i class="fas fa-dollar-sign text-green-600 mr-1"></i>
+                Recommended Claim Amount
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-green-700">$</span>
+                <input type="text" id="recommendedClaim" name="recommended_claim_amount" readonly
+                  placeholder="0.00"
+                  class="w-full pl-8 pr-3 py-3 text-base border-2 border-green-400 bg-white text-green-700 font-bold text-center" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-6 flex items-center justify-between">
+      <div class="text-xs text-gray-500">
+        <i class="fas fa-eye mr-1"></i>
+        <span class="font-medium">View-Only Report</span> - This assessment has been completed
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="/claims" 
+          class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Back to Claims List
+        </a>
+        <button onclick="window.print()" 
+          class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-xl transition duration-150 ease-in-out transform hover:-translate-y-0.5">
+          <i class="fas fa-print mr-2"></i>
+          Print Report
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
+
 <script>
+// AI Response Display (View-Only)
   document.addEventListener('DOMContentLoaded', () => {
-    const aiResponse = document.getElementById('aiResponse');
-    const finalDamageInputs = document.getElementById('finalDamageInputs');
+  const aiResponseInput = document.getElementById('aiResponse');
+  const aiResponseBadge = document.getElementById('aiResponseBadge');
 
-    function toggleDamageInputs() {
-      if (aiResponse.value === 'no') {
-        finalDamageInputs.style.display = 'block';
-      } else {
-        finalDamageInputs.style.display = 'none';
-      }
-    }
-
-    // Initial toggle on page load
-    toggleDamageInputs();
-
-    // Listen for changes on the dropdown
-    aiResponse.addEventListener('change', () => {
-      toggleDamageInputs();
-    });
-  });
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const aiResponse = document.getElementById('aiResponse');
-    const finalDamageInputs = document.getElementById('finalDamageInputs');
-    const finalDamageArea = document.getElementById('finalDamageArea');
-    const finalDamageCost = document.getElementById('finaldamageCost');
-    const submitButton = document.getElementById('submitButton');
-
-    // Helper: Read value from URL
     function getQueryParam(param) {
       const params = new URLSearchParams(window.location.search);
       return params.get(param) || "";
     }
 
     const userInference = getQueryParam('user_inference');
-    const areaVal = getQueryParam('final_damage_area');
-    const costVal = getQueryParam('final_damage_cost');
-
-    // Prefill inputs safely
-    if (areaVal) finalDamageArea.value = areaVal;
-    if (costVal) finalDamageCost.value = costVal;
-    if (userInference) aiResponse.value = userInference;
-
-    // Control visibility & readonly
-    function toggleVisibility() {
-      if (aiResponse.value === 'no') {
-        finalDamageInputs.style.display = 'block';
-        // If data came from URL, lock inputs and hide submit
+  
         if (userInference) {
-          finalDamageArea.readOnly = true;
-          finalDamageCost.readOnly = true;
-          submitButton.style.display = 'none';
-          aiResponse.disabled = true;
-        }
-      } else if (aiResponse.value === 'yes') {
-        finalDamageInputs.style.display = 'none';
-        if (userInference) {
-          aiResponse.disabled = true;
-          submitButton.style.display = 'none';
+    if (userInference === 'yes') {
+      aiResponseInput.value = 'AI Assessment Accepted';
+      aiResponseBadge.querySelector('span').className = 'inline-flex items-center px-2 py-0.5 text-xs font-bold bg-green-100 text-green-800';
+      aiResponseBadge.querySelector('span').innerHTML = '<i class="fas fa-check-circle mr-1"></i> Accepted';
+      aiResponseBadge.classList.remove('hidden');
+    } else if (userInference === 'no') {
+      aiResponseInput.value = 'Manual Override Applied';
+      aiResponseBadge.querySelector('span').className = 'inline-flex items-center px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-800';
+      aiResponseBadge.querySelector('span').innerHTML = '<i class="fas fa-hand-paper mr-1"></i> Override';
+      aiResponseBadge.classList.remove('hidden');
         }
       } else {
-        finalDamageInputs.style.display = 'none';
-        submitButton.style.display = 'block';
-      }
-    }
+    aiResponseInput.value = 'Pending Review';
+    aiResponseBadge.querySelector('span').className = 'inline-flex items-center px-2 py-0.5 text-xs font-bold bg-gray-100 text-gray-800';
+    aiResponseBadge.querySelector('span').innerHTML = '<i class="fas fa-hourglass-half mr-1"></i> Pending';
+    aiResponseBadge.classList.remove('hidden');
+  }
+});
 
-    // Run on load
-    toggleVisibility();
-
-    // Change event only works if dropdown not disabled
-    aiResponse.addEventListener('change', toggleVisibility);
-  });
-</script>
-
-
-<script>
-
+// Cascading Dropdowns and Assessment Data
 document.addEventListener('DOMContentLoaded', () => {
   const insuranceDropdown = document.getElementById('insuranceCode');
   const policyDropdown = document.getElementById('policyCode');
@@ -184,9 +343,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const breadthFtInput = document.getElementById('breadthFt');
   const areaSqftInput = document.getElementById('areaSqft');
   const assessmentImage = document.getElementById('assessmentImage');
+  const imagePlaceholder = document.getElementById('imagePlaceholder');
   const Inputcpa_id = document.getElementById('cpa_id');
+  const confidenceBar = document.getElementById('confidenceBar');
+  const confidenceProgress = document.getElementById('confidenceProgress');
+  const aiDecisionBadge = document.getElementById('aiDecisionBadge');
 
-  // Clear all input fields and image
   function clearInputs() {
     aiDecisionInput.value = '';
     recommendedClaimInput.value = '';
@@ -196,14 +358,16 @@ document.addEventListener('DOMContentLoaded', () => {
     areaSqftInput.value = '';
     Inputcpa_id.value = '';
     assessmentImage.src = '';
+    assessmentImage.classList.add('hidden');
+    imagePlaceholder.classList.remove('hidden');
+    confidenceBar.classList.add('hidden');
+    aiDecisionBadge.classList.add('hidden');
   }
 
-  // Check if all dropdowns have valid selections
   function allDropdownsSelected() {
     return insuranceDropdown.value && policyDropdown.value && claimsDropdown.value;
   }
 
-  // Fetch assessment data and populate fields
   function fetchAndPopulate(claimsCode) {
     if (!claimsCode) {
       clearInputs();
@@ -217,23 +381,81 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .then(result => {
         const data = result.data;
-        aiDecisionInput.value = data.ai_decision || '';
-        // recommendedClaimInput.value = data.claim_recommended || '';
-        recommendedClaimInput.value = (data.ai_decision === 'Negative (No Crack)') ? 0 : (data.claim_recommended || '');
-        confidenceLevelInput.value = data.confidence || '';
-        lengthFtInput.value = data.damage_length || '';
-        breadthFtInput.value = data.damage_breadth || '';
-        areaSqftInput.value = data.damage_area || '';
+        
+        // AI Decision
+        const decision = data.ai_decision || '';
+        aiDecisionInput.value = decision;
+        
+        // Update decision badge
+        if (decision.includes('Positive') || decision.includes('Crack')) {
+          aiDecisionBadge.querySelector('span').className = 'inline-flex items-center px-2 py-0.5 text-xs font-bold bg-red-100 text-red-800';
+          aiDecisionBadge.querySelector('span').innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Crack Detected';
+          aiDecisionBadge.classList.remove('hidden');
+        } else if (decision.includes('Negative') || decision.includes('No Crack')) {
+          aiDecisionBadge.querySelector('span').className = 'inline-flex items-center px-2 py-0.5 text-xs font-bold bg-green-100 text-green-800';
+          aiDecisionBadge.querySelector('span').innerHTML = '<i class="fas fa-check-circle mr-1"></i> No Crack';
+          aiDecisionBadge.classList.remove('hidden');
+        }
+        
+        // Recommended Claim
+        const claimAmount = (decision.includes('Negative') || decision.includes('No Crack')) ? 0 : (data.claim_recommended || 0);
+        recommendedClaimInput.value = parseFloat(claimAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        // Confidence
+        const confidence = data.confidence || 0;
+        confidenceLevelInput.value = confidence ? confidence.toFixed(2) + '%' : '';
+        if (confidence) {
+          confidenceBar.classList.remove('hidden');
+          confidenceProgress.style.width = confidence + '%';
+          
+          // Color based on confidence
+          if (confidence >= 80) {
+            confidenceProgress.className = 'h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-500';
+          } else if (confidence >= 60) {
+            confidenceProgress.className = 'h-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-500';
+          } else {
+            confidenceProgress.className = 'h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-500';
+          }
+        }
+        
+        // Dimensions
+        lengthFtInput.value = data.damage_length || '0.00';
+        breadthFtInput.value = data.damage_breadth || '0.00';
+        areaSqftInput.value = data.damage_area || '0.00';
+        
+        // CPA ID
         Inputcpa_id.value = data.cpa_id || '';
-        assessmentImage.src = data.file_name ? `/static/upload_image/${data.file_name}` : '';
+        
+        // AI Analyzed Image - Show processed crack detection result
+        // The API returns 'processed_image' which is the AI-analyzed image with crack overlay
+        const imageToShow = data.processed_image || data.file_name;
+        
+        if (imageToShow) {
+          assessmentImage.src = `/static/upload_image/${imageToShow}`;
+          assessmentImage.classList.remove('hidden');
+          imagePlaceholder.classList.add('hidden');
+          
+          // Add load error handling
+          assessmentImage.onerror = function() {
+            console.warn('Failed to load processed image, trying original');
+            if (data.file_name && data.file_name !== imageToShow) {
+              assessmentImage.src = `/static/upload_image/${data.file_name}`;
+            } else {
+              assessmentImage.classList.add('hidden');
+              imagePlaceholder.classList.remove('hidden');
+            }
+          };
+        } else {
+          assessmentImage.classList.add('hidden');
+          imagePlaceholder.classList.remove('hidden');
+        }
       })
       .catch(() => clearInputs());
   }
 
-  // Fetch policies based on insurance code, then claims based on selected policy
   function fetchPolicies(insuranceCode, selectedPolicy=null, selectedClaim=null) {
     if (!insuranceCode) {
-      policyDropdown.innerHTML = '<option value="">Select Policy Code</option>';
+      policyDropdown.innerHTML = '<option value="">Select Policy Number</option>';
       claimsDropdown.innerHTML = '<option value="">Select Claim Code</option>';
       clearInputs();
       return;
@@ -242,18 +464,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(res => res.json())
       .then(result => {
         const data = result.policy_numbers;
-        let options = '<option value="">Select Policy Code</option>';
+        let options = '<option value="">Select Policy Number</option>';
         data.forEach(policy => {
           options += `<option value="${policy}"${policy === selectedPolicy ? ' selected' : ''}>${policy}</option>`;
         });
         policyDropdown.innerHTML = options;
-
-        // When policies updated, fetch claims accordingly or clear inputs
         fetchClaims(selectedPolicy, selectedClaim);
       });
   }
 
-  // Fetch claims based on policy code
   function fetchClaims(policyCode, selectedClaim=null) {
     if (!policyCode) {
       claimsDropdown.innerHTML = '<option value="">Select Claim Code</option>';
@@ -270,7 +489,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         claimsDropdown.innerHTML = options;
 
-        // If all dropdowns selected, fetch assessment data
         if (allDropdownsSelected()) {
           fetchAndPopulate(claimsDropdown.value);
         } else {
@@ -279,19 +497,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // When insurance changes, update policies and clear/reset
   insuranceDropdown.addEventListener('change', () => {
     fetchPolicies(insuranceDropdown.value);
     clearInputs();
   });
 
-  // When policy changes, update claims and clear/reset
   policyDropdown.addEventListener('change', () => {
     fetchClaims(policyDropdown.value);
     clearInputs();
   });
 
-  // When claim changes, fetch data or clear inputs
   claimsDropdown.addEventListener('change', () => {
     if (claimsDropdown.value) {
       fetchAndPopulate(claimsDropdown.value);
@@ -300,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initial load of cascading dropdowns and assessment data if fully selected
+  // Initial load
   const initialInsurance = insuranceDropdown.value;
   const initialPolicy = policyDropdown.value;
   const initialClaim = claimsDropdown.value;
@@ -309,6 +524,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchPolicies(initialInsurance, initialPolicy, initialClaim);
   }
 });
-
 </script>
+
 {% endblock %}

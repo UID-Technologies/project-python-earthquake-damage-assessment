@@ -341,33 +341,49 @@ def new_report():
     claim_property_details_id = request.args.get('claim_property_details_id')
     claims_code = request.args.get('claims_code')
     
-    if not claims_id:
-        abort(400, description="Missing claims_id")
+    # claims_code is required, claims_id is optional (we can fetch it)
     if not claims_code:
         abort(400, description="Missing claims_code")
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT user_id FROM claims WHERE claims_code=%s", (claims_code,))
-            get_user_id = cursor.fetchone()
+            # Get claim details including claims_id, user_id, insurance_id, and policy_number
+            cursor.execute(
+                "SELECT id, user_id, insurance_id, policy_number FROM claims WHERE claims_code=%s", 
+                (claims_code,)
+            )
+            claim_data = cursor.fetchone()
             
-            if get_user_id is None:
-                abort(404, description="User not found")
+            if claim_data is None:
+                abort(404, description="Claim not found")
             
-            user_id = get_user_id['user_id']
+            # Extract data from claim
+            claims_id = claim_data['id']
+            user_id = claim_data['user_id']
             
+            # Get insurance codes for user
             cursor.execute("SELECT insurance_code FROM insurance WHERE user_id=%s", (user_id,))
             all_insurance_code = cursor.fetchall()
 
-            cursor.execute("SELECT insurance_id FROM claims WHERE id=%s", (claims_id,))
-            selected_insurance = cursor.fetchone()
+            # Get selected insurance
+            selected_insurance = {'insurance_id': claim_data['insurance_id']}
 
-            cursor.execute("SELECT policy_number FROM claims WHERE id=%s", (claims_id,))
-            selected_policy = cursor.fetchone()
+            # Get selected policy
+            selected_policy = {'policy_number': claim_data['policy_number']}
 
-            cursor.execute("SELECT claims_code FROM claims WHERE claims_code = %s", (claims_code,))
-            selected_claim = cursor.fetchone()
+            # Get selected claim
+            selected_claim = {'claims_code': claims_code}
+            
+            # Get claim_property_details_id if not provided
+            if not claim_property_details_id:
+                cursor.execute(
+                    "SELECT id FROM claim_property_details WHERE claims_id=%s ORDER BY id DESC LIMIT 1",
+                    (claims_id,)
+                )
+                cpd = cursor.fetchone()
+                if cpd:
+                    claim_property_details_id = cpd['id']
 
         return render_template(
             'new_report.html',

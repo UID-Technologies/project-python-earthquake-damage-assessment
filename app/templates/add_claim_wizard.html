@@ -1309,7 +1309,7 @@ function updateStepCircles() {
 // Next step
 async function nextStep() {
   if (currentStep === 1) {
-    // Save data
+    // Save data locally (no database save at this step)
     claimData.user_id = document.getElementById('user_id').value;
     claimData.insurance_code = document.getElementById('insurance_code').value;
     claimData.policy_number = document.getElementById('policy_number').value;
@@ -1319,7 +1319,7 @@ async function nextStep() {
     claimData.situation_of_loss = document.getElementById('situation_of_loss').value;
     claimData.cause_of_loss = document.getElementById('cause_of_loss').value;
     
-    // Validate essential fields before creating claim
+    // Validate essential fields
     if (!claimData.user_id) {
       showToast('User ID is missing. Please refresh and try again.', 'error');
       return;
@@ -1343,15 +1343,8 @@ async function nextStep() {
       return;
     }
     
-    // Try to create the claim
-    try {
-      await createClaim();
-      showToast('Claim created successfully!', 'success');
-    } catch (error) {
-      console.error('Error creating claim:', error);
-      showToast('Failed to create claim. Please check all fields and try again.', 'error');
-      return; // Don't proceed if claim creation fails
-    }
+    // Show success message (data stored locally, will save to DB on final submit)
+    showToast('Basic details saved! Proceed to next step.', 'success');
   } else if (currentStep === 2) {
     // TEMPORARY: Allow proceeding even without images for design review
     // TODO: Uncomment this validation when ready for production
@@ -1409,7 +1402,10 @@ function showStep(step) {
   }
 }
 
-// Create claim
+// Create claim - NO LONGER USED
+// Claim is now created only on final submit (Step 5) via submit-final endpoint
+// This function kept for reference only
+/*
 async function createClaim() {
   const token = localStorage.getItem('token');
   
@@ -1463,6 +1459,7 @@ async function createClaim() {
     throw error;
   }
 }
+*/
 
 // Populate review
 function populateReview() {
@@ -1709,22 +1706,17 @@ function populateAIAnalysisReview() {
             </div>
           </div>
           
-          <!-- Update Button -->
-          <div class="flex items-center justify-between pt-3 border-t border-yellow-300">
-            <button
-              type="button"
-              onclick="cancelManualOverride(${index})"
-              class="px-4 py-2 bg-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-400 focus:outline-none transition"
-            >
-              <i class="fas fa-times mr-1"></i> Cancel
-            </button>
-            <button
-              type="button"
-              onclick="saveManualOverride(${index})"
-              class="px-4 py-2 bg-yellow-600 text-white text-xs font-semibold rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition"
-            >
-              <i class="fas fa-save mr-1"></i> Save Override
-            </button>
+          <!-- Info Text -->
+          <div class="pt-3 border-t border-yellow-300">
+            <div class="flex items-start bg-yellow-100 border border-yellow-400 rounded-lg p-3">
+              <i class="fas fa-info-circle text-yellow-700 text-sm mr-2 mt-0.5"></i>
+              <div>
+                <p class="text-xs font-semibold text-yellow-900">Manual Override Active</p>
+                <p class="text-xs text-yellow-800 mt-1">
+                  Your custom values will be saved when you submit the claim on the final step.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -2155,10 +2147,17 @@ async function submitClaim() {
     // Prepare complete form data with all claim information
     const formData = new FormData();
     
-    // Basic claim info
+    // Step 1: Basic claim info
+    formData.append('user_id', claimData.user_id);
+    formData.append('insurance_code', claimData.insurance_code);
+    formData.append('policy_number', claimData.policy_number);
     formData.append('claims_code', claimData.claims_code);
+    formData.append('claim_details', claimData.claim_details || '');
+    formData.append('time_of_loss', claimData.time_of_loss || '');
+    formData.append('situation_of_loss', claimData.situation_of_loss || '');
+    formData.append('cause_of_loss', claimData.cause_of_loss || '');
     
-    // Property details from Step 3
+    // Step 3: Property details
     formData.append('property_type', claimData.property_type || '');
     formData.append('wall_type', claimData.wall_type || '');
     formData.append('damage_area', claimData.damage_area || '0');
@@ -2167,11 +2166,31 @@ async function submitClaim() {
     formData.append('damage_height', claimData.damage_height || '1');
     formData.append('rate_per_sqft', claimData.rate_per_sqft || '350');
     
-    // Add images from Step 2
+    // Step 2: Add images
     if (claimData.images && claimData.images.length > 0) {
       claimData.images.forEach(file => {
         formData.append('images', file);
       });
+    }
+    
+    // Step 4: Collect manual override data for each image (if any)
+    const manualOverrides = [];
+    if (claimData.images && claimData.images.length > 0) {
+      claimData.images.forEach((file, index) => {
+        const overrideData = collectManualOverride(index);
+        if (overrideData) {
+          manualOverrides.push({
+            image_index: index,
+            image_filename: file.name,
+            ...overrideData
+          });
+        }
+      });
+    }
+    
+    // Add manual overrides as JSON string
+    if (manualOverrides.length > 0) {
+      formData.append('manual_overrides', JSON.stringify(manualOverrides));
     }
     
     console.log('Submitting final claim data:', {
@@ -2179,7 +2198,8 @@ async function submitClaim() {
       property_type: claimData.property_type,
       wall_type: claimData.wall_type,
       damage_area: claimData.damage_area,
-      images_count: claimData.images.length
+      images_count: claimData.images.length,
+      manual_overrides_count: manualOverrides.length
     });
     
     // Submit to comprehensive API endpoint
@@ -2266,27 +2286,37 @@ function acceptAIAnalysis(index, accepted) {
   }
 }
 
-// Cancel Manual Override
-function cancelManualOverride(index) {
-  const yesBtn = document.getElementById(`accept-yes-${index}`);
-  const noBtn = document.getElementById(`accept-no-${index}`);
+// Collect Manual Override Data (called during final submission)
+function collectManualOverride(index) {
   const manualForm = document.getElementById(`manual-form-${index}`);
-  const statusBadge = document.getElementById(`status-badge-${index}`);
   
-  // Reset buttons
-  yesBtn.classList.remove('ring-2', 'ring-green-500', 'bg-green-700');
-  yesBtn.classList.add('bg-green-600');
-  noBtn.classList.remove('ring-2', 'ring-gray-400', 'bg-gray-300');
-  noBtn.classList.add('bg-gray-200');
+  // Check if manual override is active (form is visible)
+  if (!manualForm || manualForm.classList.contains('hidden')) {
+    return null;
+  }
   
-  // Hide form and badge
-  manualForm.classList.add('hidden');
-  statusBadge.classList.add('hidden');
+  const decision = document.getElementById(`manual-decision-${index}`).value;
+  const confidence = parseFloat(document.getElementById(`manual-confidence-${index}`).value);
+  const length = parseFloat(document.getElementById(`manual-length-${index}`).value);
+  const breadth = parseFloat(document.getElementById(`manual-breadth-${index}`).value);
+  const area = parseFloat(document.getElementById(`manual-area-${index}`).value);
+  const claimAmount = parseFloat(document.getElementById(`manual-claim-${index}`).value);
   
-  showToast('Manual override cancelled', 'info');
+  return {
+    ai_decision: decision === 'positive' ? 'Positive (Crack Detected)' : 'Negative (No Crack)',
+    confidence: confidence,
+    length_ft: length,
+    width_ft: breadth,
+    area_sqft: area,
+    claim_recommended: claimAmount,
+    crack_detected: decision === 'positive',
+    is_override: true
+  };
 }
 
-// Save Manual Override
+// Save Manual Override - REMOVED (Now saved on final submission)
+// This function is no longer used
+/*
 async function saveManualOverride(index) {
   const decision = document.getElementById(`manual-decision-${index}`).value;
   const confidence = parseFloat(document.getElementById(`manual-confidence-${index}`).value);
@@ -2407,6 +2437,7 @@ async function saveManualOverride(index) {
     saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Save Override';
   }
 }
+*/
 
 // Initialize on page load
 showStep(1);
