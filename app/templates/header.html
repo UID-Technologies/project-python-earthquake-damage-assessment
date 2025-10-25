@@ -1,31 +1,40 @@
-<header class="app-header">
-  <div class="header-left">
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="header-logo" />
-    <span class="header-company-name"></span>
+<!-- Modern Header with Tailwind CSS -->
+<nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+  <div class="px-3 py-3 lg:px-5 lg:pl-3">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center justify-start">
+        <button data-drawer-target="sidebar" data-drawer-toggle="sidebar" aria-controls="sidebar" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+          <span class="sr-only">Open sidebar</span>
+          <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
+          </svg>
+        </button>
+        <a href="/dashboard" class="flex ml-2 md:mr-24">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-10 mr-3 rounded-lg" alt="Logo" />
+        </a>
+      </div>
+      <div class="flex items-center">
+        <div class="flex items-center ml-3 space-x-4">
+          <!-- Notifications -->
+          <button type="button" class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 focus:ring-4 focus:ring-gray-300">
+            <span class="sr-only">View notifications</span>
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+            </svg>
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full">3</span>
+          </button>
+          
+          <!-- User Menu -->
+          <div class="relative">
+            <button type="button" class="flex items-center text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button">
+              <span class="sr-only">Open user menu</span>
+              <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                <i class="fas fa-user"></i>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="header-right" style="margin-left:auto; font-weight:600; font-size:14px;">
-    <span id="currentDateTime"></span>
-  </div>
-</header>
-
-<script>
-  function updateDateTime() {
-    const now = new Date();
-    const options = { weekday: 'long' };
-    const day = now.toLocaleDateString('en-US', options);
-    const month = now.toLocaleString('default', { month: 'long' });
-    const date = now.getDate();
-    const year = now.getFullYear();
-    let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    const timeStr = `${hours}:${minutes}:${seconds} ${ampm}`;
-    const dateStr = `${day}, ${month} ${date}, ${year}`;
-    document.getElementById('currentDateTime').textContent = `${dateStr} | ${timeStr}`;
-  }
-
-  updateDateTime();
-  setInterval(updateDateTime, 1000);
-</script>
+</nav>

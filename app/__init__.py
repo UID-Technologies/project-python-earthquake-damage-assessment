@@ -1,13 +1,21 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from app.config import Config
-from app.routes.login import login_bp
-from app.routes.dashboard import dashboard_bp
-from app.routes.signup import signup_bp
 from app.blocklist import BLOCKLIST
-from app.routes.earthquake_detection import earthquake_bp
-from app.routes.claim_insurance import claim_bp
+
+# Import API blueprints
+from app.routes.api.auth_api import auth_api_bp
+from app.routes.api.dashboard_api import dashboard_api_bp
+from app.routes.api.detection_api import detection_api_bp
+from app.routes.api.insurance_api import insurance_api_bp
+from app.routes.api.claims_api import claims_api_bp
+
+# Import Page blueprints
+from app.routes.pages.auth_pages import auth_pages_bp
+from app.routes.pages.dashboard_pages import dashboard_pages_bp
+from app.routes.pages.insurance_pages import insurance_pages_bp
+
 # Initialize extensions (without app context)
 jwt = JWTManager()
 bcrypt = Bcrypt()
@@ -20,12 +28,17 @@ def create_app():
     jwt.init_app(app)
     bcrypt.init_app(app)
 
-    # Register Blueprints
-    app.register_blueprint(login_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(signup_bp)
-    app.register_blueprint(earthquake_bp)
-    app.register_blueprint(claim_bp) 
+    # Register API Blueprints
+    app.register_blueprint(auth_api_bp)
+    app.register_blueprint(dashboard_api_bp)
+    app.register_blueprint(detection_api_bp)
+    app.register_blueprint(insurance_api_bp)
+    app.register_blueprint(claims_api_bp)
+    
+    # Register Page Blueprints
+    app.register_blueprint(auth_pages_bp)
+    app.register_blueprint(dashboard_pages_bp)
+    app.register_blueprint(insurance_pages_bp) 
     # Check if token is revoked
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):

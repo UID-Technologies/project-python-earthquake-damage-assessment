@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Insurance Policies - Proclaim{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Insurance Policies</h1>
+        <p class="mt-2 text-sm text-gray-600">Manage all your insurance policies in one place</p>
+      </div>
+      <div class="mt-4 md:mt-0">
+        <a
+          href="{{ url_for('insurance_pages.claim_insurance') }}"
+          class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-xl transition duration-150 ease-in-out transform hover:-translate-y-0.5"
+        >
+          <i class="fas fa-plus mr-2"></i>
+          Add Insurance Policy
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div id="stats-section" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 hidden">
+    <div class="bg-white shadow-lg p-6 border-l-4 border-blue-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-blue-100 p-3">
+          <i class="fas fa-shield-alt text-blue-600 text-2xl"></i>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Total Policies</p>
+          <p id="total-policies" class="text-2xl font-bold text-gray-900">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow-lg p-6 border-l-4 border-green-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-green-100 p-3">
+          <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Active Policies</p>
+          <p id="active-policies" class="text-2xl font-bold text-gray-900">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow-lg p-6 border-l-4 border-amber-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-amber-100 p-3">
+          <i class="fas fa-clock text-amber-600 text-2xl"></i>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Inactive Policies</p>
+          <p id="inactive-policies" class="text-2xl font-bold text-gray-900">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policies Table Card -->
+  <div class="bg-white shadow-xl overflow-hidden">
+    <!-- Card Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-list mr-3"></i>
+          All Insurance Policies
+        </h2>
+        <span id="policy-count" class="bg-white/20 backdrop-blur-sm px-3 py-1 text-white font-semibold text-sm">
+          0 Policies
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="inline-block animate-spin h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-600 font-medium">Loading policies...</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 px-4">
+      <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-4">
+        <i class="fas fa-shield-alt text-gray-400 text-4xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">No Insurance Policies Found</h3>
+      <p class="text-sm text-gray-500 text-center max-w-sm mb-6">
+        You haven't added any insurance policies yet. Click the button below to add your first policy.
+      </p>
+      <a
+        href="{{ url_for('insurance_pages.claim_insurance') }}"
+        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition duration-150"
+      >
+        <i class="fas fa-plus mr-2"></i>
+        Add Your First Policy
+      </a>
+    </div>
+
+    <!-- Table Container -->
+    <div id="table-container" class="hidden overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Policy Details
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Insured Person
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Coverage Period
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Type
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody id="policies-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Rows will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
+
+<script>
+let allPolicies = [];
+
+// Fetch insurance policies
+async function fetchPolicies() {
+  const token = localStorage.getItem('token');
+  const loadingState = document.getElementById('loading-state');
+  const emptyState = document.getElementById('empty-state');
+  const tableContainer = document.getElementById('table-container');
+  const statsSection = document.getElementById('stats-section');
+  
+  try {
+    const response = await fetch('/api/insurance/policies', {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch policies');
+    }
+    
+    const data = await response.json();
+    allPolicies = data.insurance_policies || [];
+    
+    loadingState.classList.add('hidden');
+    
+    if (allPolicies.length === 0) {
+      emptyState.classList.remove('hidden');
+      tableContainer.classList.add('hidden');
+      statsSection.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      tableContainer.classList.remove('hidden');
+      statsSection.classList.remove('hidden');
+      renderPolicies(allPolicies);
+      updateStats(allPolicies);
+    }
+    
+  } catch (error) {
+    console.error('Error loading policies:', error);
+    loadingState.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+  }
+}
+
+// Render policies in table
+function renderPolicies(policies) {
+  const tbody = document.getElementById('policies-table-body');
+  tbody.innerHTML = '';
+  
+  policies.forEach((policy) => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 transition duration-150';
+    
+    // Format dates
+    const startDate = policy.insurance_from ? new Date(policy.insurance_from).toLocaleDateString() : 'N/A';
+    const endDate = policy.insurance_to ? new Date(policy.insurance_to).toLocaleDateString() : 'N/A';
+    
+    // Status badge
+    const statusClass = policy.status === 'active' 
+      ? 'bg-green-100 text-green-800' 
+      : 'bg-gray-100 text-gray-800';
+    
+    // Insurance type badge
+    const typeColors = {
+      'earthquake': 'bg-red-100 text-red-800',
+      'flood': 'bg-blue-100 text-blue-800',
+      'comprehensive': 'bg-purple-100 text-purple-800'
+    };
+    const typeClass = typeColors[policy.insurance_type] || 'bg-gray-100 text-gray-800';
+    
+    tr.innerHTML = `
+      <td class="px-6 py-4">
+        <div>
+          <div class="text-sm font-medium text-gray-900">${policy.insurance_code || 'N/A'}</div>
+          <div class="text-sm text-gray-500">Policy: ${policy.policy_number || 'N/A'}</div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <div>
+          <div class="text-sm font-medium text-gray-900">${policy.insured || 'N/A'}</div>
+          <div class="text-sm text-gray-500">${policy.occupation || 'N/A'}</div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="text-sm text-gray-900">
+          <div><i class="fas fa-calendar-alt text-gray-400 mr-1"></i> ${startDate}</div>
+          <div class="mt-1"><i class="fas fa-calendar-check text-gray-400 mr-1"></i> ${endDate}</div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${typeClass} capitalize">
+          ${policy.insurance_type || 'N/A'}
+        </span>
+      </td>
+      <td class="px-6 py-4">
+        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${statusClass} capitalize">
+          ${policy.status || 'inactive'}
+        </span>
+      </td>
+      <td class="px-6 py-4 text-sm">
+        <div class="flex space-x-3">
+          <button
+            onclick="viewPolicy(${policy.id})"
+            class="text-blue-600 hover:text-blue-900 transition duration-150"
+            title="View Details"
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+          <button
+            onclick="editPolicy(${policy.id})"
+            class="text-green-600 hover:text-green-900 transition duration-150"
+            title="Edit Policy"
+          >
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+  
+  updatePolicyCount(policies.length);
+}
+
+// Update statistics
+function updateStats(policies) {
+  const total = policies.length;
+  const active = policies.filter(p => p.status === 'active').length;
+  const inactive = total - active;
+  
+  document.getElementById('total-policies').textContent = total;
+  document.getElementById('active-policies').textContent = active;
+  document.getElementById('inactive-policies').textContent = inactive;
+}
+
+// Update policy count
+function updatePolicyCount(count) {
+  document.getElementById('policy-count').textContent = `${count} ${count === 1 ? 'Policy' : 'Policies'}`;
+}
+
+// View policy details
+function viewPolicy(policyId) {
+  const policy = allPolicies.find(p => p.id === policyId);
+  if (policy) {
+    alert(`Policy Details:\n\nInsurance Code: ${policy.insurance_code}\nPolicy Number: ${policy.policy_number}\nInsured: ${policy.insured}\nType: ${policy.insurance_type}\nStatus: ${policy.status}`);
+  }
+}
+
+// Edit policy
+function editPolicy(policyId) {
+  // TODO: Implement edit functionality
+  alert(`Edit policy ${policyId} - Feature coming soon!`);
+}
+
+// Initialize
+fetchPolicies();
+</script>
+
+{% endblock %}
+

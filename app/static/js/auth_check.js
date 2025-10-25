@@ -10,7 +10,7 @@ async function verifyToken() {
   if (!token) {
     window.location.href = '/';
   } else {
-    const response = await fetch('/api/auth-check', {
+    const response = await fetch('/api/auth/verify', {
       method: 'GET',
       headers: { 'Authorization': 'Bearer ' + token }
     });

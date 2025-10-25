@@ -1,85 +1,296 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard Overview{% endblock %}
+{% block title %}Dashboard - Proclaim{% endblock %}
 
 {% block content %}
-<!-- your dashboard metrics and content here -->
-<h1>Welcome to the Dashboard</h1>
-            <section class="dashboard-metrics">
-                            <!-- Metrics Cards (unchanged) -->
-                            <div class="metric-card">
-                                <i class="fas fa-shield-alt icon-metric"></i>
-                                <h3 class="metric-title">Total Insurance</h3>
-                                <p class="metric-value" id="totalInsurance">Loading...</p>
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+    <p class="mt-2 text-sm text-gray-600">Welcome back! Here's what's happening with your assessments today.</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+    <!-- Total Insurance Card -->
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
+              <i class="fas fa-shield-alt text-2xl text-white"></i>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Insurance</dt>
+              <dd class="flex items-baseline">
+                <div id="totalInsurance" class="text-3xl font-bold text-gray-900">
+                  <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+        <div class="text-sm">
+          <a href="/insurances" class="font-medium text-blue-700 hover:text-blue-900 flex items-center">
+            View all policies
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Claims Card -->
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
+              <i class="fas fa-file-alt text-2xl text-white"></i>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Claims</dt>
+              <dd class="flex items-baseline">
+                <div id="totalClaims" class="text-3xl font-bold text-gray-900">
+                  <i class="fas fa-spinner fa-spin text-purple-500"></i>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-3">
+        <div class="text-sm">
+          <a href="/claims" class="font-medium text-purple-700 hover:text-purple-900 flex items-center">
+            View all claims
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Picture Tests Card -->
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg">
+              <i class="fas fa-image text-2xl text-white"></i>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">AI Tests</dt>
+              <dd class="flex items-baseline">
+                <div id="totalPictures" class="text-3xl font-bold text-gray-900">
+                  <i class="fas fa-spinner fa-spin text-green-500"></i>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-r from-green-50 to-green-100 px-6 py-3">
+        <div class="text-sm">
+          <span class="font-medium text-green-700 flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            Images analyzed
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Policies Card -->
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl shadow-lg">
+              <i class="fas fa-hand-holding-usd text-2xl text-white"></i>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Policies</dt>
+              <dd class="flex items-baseline">
+                <div id="total_policy_number" class="text-3xl font-bold text-gray-900">
+                  <i class="fas fa-spinner fa-spin text-amber-500"></i>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-r from-amber-50 to-amber-100 px-6 py-3">
+        <div class="text-sm">
+          <a href="/insurance_report" class="font-medium text-amber-700 hover:text-amber-900 flex items-center">
+            View reports
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Information Section -->
+  <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+      <h2 class="text-xl font-bold text-white flex items-center">
+        <i class="fas fa-user-circle mr-3"></i>
+        Your Profile Information
+      </h2>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-500">
+            <i class="fas fa-user w-5 text-blue-500"></i>
+            <span class="ml-2 font-medium">Full Name</span>
+          </div>
+          <p id="name" class="text-base font-semibold text-gray-900 pl-7">
+            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+          </p>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-500">
+            <i class="fas fa-envelope w-5 text-purple-500"></i>
+            <span class="ml-2 font-medium">Email Address</span>
+          </div>
+          <p id="email" class="text-base font-semibold text-gray-900 pl-7">
+            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+          </p>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-500">
+            <i class="fas fa-phone w-5 text-green-500"></i>
+            <span class="ml-2 font-medium">Mobile Number</span>
+          </div>
+          <p id="mobile" class="text-base font-semibold text-gray-900 pl-7">
+            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+          </p>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-500">
+            <i class="fas fa-map-marker-alt w-5 text-red-500"></i>
+            <span class="ml-2 font-medium">Address</span>
+          </div>
+          <p id="address" class="text-base font-semibold text-gray-900 pl-7">
+            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="/insurances" class="group block p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <i class="fas fa-shield-alt text-white text-xl"></i>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Insurances</h3>
+          <p class="text-sm text-gray-600">View all policies</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="/claims" class="group block p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <i class="fas fa-file-medical text-white text-xl"></i>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">Claims</h3>
+          <p class="text-sm text-gray-600">View all claims</p>
+        </div>
                             </div>
-                            <div class="metric-card">
-                                <i class="fas fa-file-alt icon-metric"></i>
-                                <h3 class="metric-title">Total Claims</h3>
-                                <p class="metric-value" id="totalClaims">Loading...</p>
+    </a>
+
+    <a href="/insurance_report" class="group block p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <i class="fas fa-chart-bar text-white text-xl"></i>
                             </div>
-                            <div class="metric-card">
-                                <i class="fas fa-image icon-metric"></i>
-                                <h3 class="metric-title">Picture Test</h3>
-                                <p class="metric-value" id="totalPictures">Loading...</p>
                             </div>
-                            <div class="metric-card">
-                                <i class="fas fa-hand-holding-usd"></i>
-                                <h3 class="metric-title">Total Policy</h3>
-                                <p class="metric-value" id="total_policy_number">Loading...</p>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">View Reports</h3>
+          <p class="text-sm text-gray-600">Access all reports</p>
                             </div>
-                        </section>
-                        <section class="dashboard-tables">
-                            <div class="table-card">
-                                <div class="card-header">
-                                    <h3>User Information</h3>
                                 </div>
-                                <div class="card-body">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Email</th>
-                                                <th>Mobile</th>
-                                                <th>Address</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td id="name">John Doe</td>
-                                                <td id="email">Signed up</td>
-                                                <td id="mobile">1 hour ago</td>
-                                                <td id="address">1 hour ago</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+    </a>
                                 </div>
                             </div>
-            </section>
 
 <script>
   async function fetchDashboardCounts() {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch('/api/dashboard', {
+      const response = await fetch('/api/dashboard/stats', {
         headers: {
           'Authorization': 'Bearer ' + token
         }
       });
       const data = await response.json();
-      document.getElementById('totalInsurance').textContent = data.total_insurance_count ?? 0;
-      document.getElementById('totalClaims').textContent = data.total_claims_count ?? 0;
-      document.getElementById('totalPictures').textContent = data.total_picture_tests ?? 0;
-      document.getElementById('total_policy_number').textContent = data.total_policy_number ?? 0;
-      document.getElementById('name').textContent = data.name ?? '';
-      document.getElementById('email').textContent = data.email ?? '';
-      document.getElementById('mobile').textContent = data.mobile ?? '';
-      document.getElementById('address').textContent = data.address ?? '';
+      
+      // Animate number counting
+      const animateNumber = (elementId, endValue) => {
+        const element = document.getElementById(elementId);
+        const duration = 1000;
+        const steps = 20;
+        const stepValue = endValue / steps;
+        let currentValue = 0;
+        
+        const interval = setInterval(() => {
+          currentValue += stepValue;
+          if (currentValue >= endValue) {
+            element.textContent = endValue;
+            clearInterval(interval);
+          } else {
+            element.textContent = Math.floor(currentValue);
+          }
+        }, duration / steps);
+      };
+      
+      // Update with animation
+      animateNumber('totalInsurance', data.total_insurance_count ?? 0);
+      animateNumber('totalClaims', data.total_claims_count ?? 0);
+      animateNumber('totalPictures', data.total_picture_tests ?? 0);
+      animateNumber('total_policy_number', data.total_policy_number ?? 0);
+      
+      // Update user info
+      document.getElementById('name').textContent = data.name ?? 'N/A';
+      document.getElementById('email').textContent = data.email ?? 'N/A';
+      document.getElementById('mobile').textContent = data.mobile ?? 'N/A';
+      document.getElementById('address').textContent = data.address ?? 'N/A';
+      
     } catch (error) {
       console.error('Failed to fetch dashboard counts:', error);
-      // Optionally set default or error text here
+      // Set defaults on error
+      ['totalInsurance', 'totalClaims', 'totalPictures', 'total_policy_number'].forEach(id => {
+        document.getElementById(id).textContent = '0';
+      });
+      ['name', 'email', 'mobile', 'address'].forEach(id => {
+        document.getElementById(id).textContent = 'N/A';
+      });
     }
   }
+  
+  // Fetch data when page loads
   fetchDashboardCounts();
 </script>
-
 {% endblock %}

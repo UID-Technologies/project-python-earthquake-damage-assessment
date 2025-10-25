@@ -1,79 +1,282 @@
 {% extends "base.html" %}
 
-{% block title %}Insurance Details{% endblock %}
+{% block title %}Add Insurance - Proclaim{% endblock %}
 
 {% block content %}
-  <div class="insurance-page">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="title-container">
-          <h1 class="login-title">Insurance Details</h1>
-          <p class="login-subtitle">Enter your insurance information below.</p>
-        </div>
-      </div>
-      <form id="insuranceForm" action="/submit_insurance_detail" method="POST">
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Add Insurance Policy</h1>
+    <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new insurance policy.</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden max-w-5xl">
+    <!-- Card Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
+      <h2 class="text-2xl font-bold text-white flex items-center">
+        <i class="fas fa-shield-alt mr-3"></i>
+        Insurance Details Form
+      </h2>
+      <p class="mt-1 text-sm text-blue-100">Please provide accurate information for your insurance policy</p>
+    </div>
+
+    <!-- Form Body -->
+    <div class="p-8">
+      <form id="insuranceForm" action="/submit_insurance_detail" method="POST" class="space-y-6">
         <input type="hidden" id="user_id" name="username" value="">
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="insuranceCode" class="input-label">Insurance Code</label>
-            <input type="text" id="insuranceCode" name="insurance_code" class="login-input" placeholder="Enter insurance code" required/>
-          </div>
-          <div class="form-group half-width">
-            <label for="insuredFrom" class="input-label">Insured From</label>
-            <input type="datetime-local" id="insuredFrom" name="insurance_from" class="login-input" required />
+        
+        <!-- Policy Information Section -->
+        <div class="space-y-6">
+          <h3 class="text-lg font-semibold text-gray-900 border-b-2 border-blue-200 pb-2 flex items-center">
+            <i class="fas fa-file-alt text-blue-600 mr-2"></i>
+            Policy Information
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Insurance Code -->
+            <div>
+              <label for="insuranceCode" class="block text-sm font-medium text-gray-700 mb-2">
+                Insurance Code <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-barcode text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  id="insuranceCode"
+                  name="insurance_code"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                  placeholder="Enter insurance code"
+                />
+              </div>
+            </div>
+
+            <!-- Policy Number -->
+            <div>
+              <label for="policyNumber" class="block text-sm font-medium text-gray-700 mb-2">
+                Policy Number <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-hashtag text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  id="policyNumber"
+                  name="policy_number"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                  placeholder="Enter policy number"
+                />
+              </div>
+            </div>
+
+            <!-- Insured From -->
+            <div>
+              <label for="insuredFrom" class="block text-sm font-medium text-gray-700 mb-2">
+                Coverage Start Date <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-calendar-alt text-gray-400"></i>
+                </div>
+                <input
+                  type="datetime-local"
+                  id="insuredFrom"
+                  name="insurance_from"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Insured Till -->
+            <div>
+              <label for="insuredTill" class="block text-sm font-medium text-gray-700 mb-2">
+                Coverage End Date <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-calendar-check text-gray-400"></i>
+                </div>
+                <input
+                  type="datetime-local"
+                  id="insuredTill"
+                  name="insurance_to"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Insurance Type -->
+            <div>
+              <label for="insuranceType" class="block text-sm font-medium text-gray-700 mb-2">
+                Insurance Type <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-list text-gray-400"></i>
+                </div>
+                <select
+                  id="insuranceType"
+                  name="insurance_type"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                >
+                  <option value="">Select insurance type</option>
+                  <option value="earthquake">Earthquake Insurance</option>
+                  <option value="flood">Flood Insurance</option>
+                  <option value="comprehensive">Comprehensive</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                Status <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-toggle-on text-gray-400"></i>
+                </div>
+                <select
+                  id="status"
+                  name="status"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="insuredTill" class="input-label">Insured Till</label>
-            <input type="datetime-local" id="insuredTill" name="insurance_to" class="login-input" required />
-          </div>
-          <div class="form-group half-width">
-            <label for="insuranceType" class="input-label">Insurance Type</label>
-            <select id="insuranceType" name="insurance_type" class="login-input" required>
-              <option value="">Select type</option>
-              <option value="earthquake">Earthquake</option>
-              <option value="flood">Flood</option>
-            </select>
+        <!-- Insured Person Information -->
+        <div class="space-y-6">
+          <h3 class="text-lg font-semibold text-gray-900 border-b-2 border-purple-200 pb-2 flex items-center">
+            <i class="fas fa-user text-purple-600 mr-2"></i>
+            Insured Person Details
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Name of Insured -->
+            <div>
+              <label for="nameOfInsured" class="block text-sm font-medium text-gray-700 mb-2">
+                Name of Insured <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-user text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  id="nameOfInsured"
+                  name="insured"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                  placeholder="Full name of insured"
+                />
+              </div>
+            </div>
+
+            <!-- Occupation -->
+            <div>
+              <label for="occupationOfInsured" class="block text-sm font-medium text-gray-700 mb-2">
+                Occupation <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-briefcase text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  id="occupationOfInsured"
+                  name="occupation"
+                  required
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                  placeholder="Occupation"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="nameOfInsured" class="input-label">Name of Insured</label>
-            <input type="text" id="nameOfInsured" name="insured" class="login-input" placeholder="Full name" required/>
-          </div>
-          <div class="form-group half-width">
-            <label for="occupationOfInsured" class="input-label">Occupation of Insured</label>
-            <input type="text" id="occupationOfInsured" name="occupation" class="login-input" placeholder="Occupation" required/>
+        <!-- Additional Details -->
+        <div class="space-y-6">
+          <h3 class="text-lg font-semibold text-gray-900 border-b-2 border-green-200 pb-2 flex items-center">
+            <i class="fas fa-info-circle text-green-600 mr-2"></i>
+            Additional Information
+          </h3>
+          
+          <!-- Insurance Details (Textarea) -->
+          <div>
+            <label for="insuranceDetails" class="block text-sm font-medium text-gray-700 mb-2">
+              Policy Details / Notes
+            </label>
+            <div class="relative">
+              <textarea
+                id="insuranceDetails"
+                name="insurance_details"
+                rows="4"
+                class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+                placeholder="Enter any additional details about the insurance policy..."
+              ></textarea>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Optional: Provide any additional information that may be relevant</p>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="occupationOfInsured" class="input-label">Policy Number</label>
-            <input type="text" id="PolicyNumber" name="policy_number" class="login-input" placeholder="Policy Number" required/>
-          </div>
-          <div class="form-group half-width">
-            <label for="status" class="input-label">Status</label>
-            <select id="status" name="status" class="login-input" required>
-              <option value="">Select status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+          <a
+            href="/dashboard"
+            class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+          >
+            <i class="fas fa-arrow-left mr-2"></i>
+            Cancel
+          </a>
+          
+          <button
+            type="submit"
+            class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-xl transition duration-150 ease-in-out transform hover:-translate-y-0.5"
+          >
+            <i class="fas fa-save mr-2"></i>
+            Save Insurance Policy
+          </button>
         </div>
-        <div class="form-row">
-          <div class="form-group half-width">
-              <label for="insuranceDetails" class="input-label">Insurance Details</label>
-              <textarea id="insuranceDetails" name="insurance_details" class="login-input" rows="4" placeholder="Additional details"></textarea>
-          </div>
-      </div>
-        <button type="submit" class="login-button">Next</button>
-        <!-- <button type="button" class="login-button" onclick="location.href='/insurance_claims_detail'">Next</button> -->
       </form>
     </div>
   </div>
+
+  <!-- Help Section -->
+  <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-blue-900">Important Information</h3>
+        <div class="mt-2 text-sm text-blue-700">
+          <ul class="list-disc list-inside space-y-1">
+            <li>All fields marked with <span class="text-red-500">*</span> are required</li>
+            <li>Insurance code must be unique for each policy</li>
+            <li>Make sure coverage dates are accurate</li>
+            <li>Policy will be linked to your account automatically</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
 
 <script>
   async function fetchUserId() {
@@ -82,7 +285,7 @@
       console.log("No token, user not logged in");
       return null;
     }
-    const response = await fetch('/api/get_user_id', {
+    const response = await fetch('/api/auth/user', {
       headers: {
         'Authorization': 'Bearer ' + token
       }
@@ -100,23 +303,27 @@
     const userId = await fetchUserId();
     if (userId) {
       document.getElementById('user_id').value = userId;
-      return true;
+    } else {
+      console.warn('Could not set user_id');
     }
-    return false;
   }
 
-  document.getElementById('insuranceForm').addEventListener('submit', async function(event) {
-    event.preventDefault(); // stop normal form submit
+  // Set user ID when page loads
+  setUserId();
 
-    const success = await setUserId();
-
-    if (!success) {
-      alert('User not logged in. Please login again.');
-      return;  // cancel submit
-    }
-
-    // proceed to submit the form now user_id is set
-    event.target.submit();
+  // Form submission handling
+  document.getElementById('insuranceForm').addEventListener('submit', function(e) {
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    const originalHTML = submitButton.innerHTML;
+    
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    
+    // Re-enable button after a delay if needed (form will redirect on success)
+    setTimeout(() => {
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalHTML;
+    }, 3000);
   });
 </script>
 

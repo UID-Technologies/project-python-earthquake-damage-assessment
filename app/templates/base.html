@@ -1,37 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-50">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Proclaim Dashboard{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/insurance_form.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/insurance_claims.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/insurance_claims_value_details.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/damaged_property_details.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/damaged_property_image.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/damaged_property_calculation.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/new_report.css') }}" />
+  <title>{% block title %}Proclaim - Damage Assessment{% endblock %}</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          fontSize: {
+            'xs': ['0.688rem', { lineHeight: '1rem' }],      // 11px (was 12px)
+            'sm': ['0.813rem', { lineHeight: '1.25rem' }],   // 13px (was 14px)
+            'base': ['0.875rem', { lineHeight: '1.5rem' }],  // 14px (was 16px)
+            'lg': ['1rem', { lineHeight: '1.75rem' }],       // 16px (was 18px)
+            'xl': ['1.125rem', { lineHeight: '1.75rem' }],   // 18px (was 20px)
+            '2xl': ['1.375rem', { lineHeight: '2rem' }],     // 22px (was 24px)
+            '3xl': ['1.75rem', { lineHeight: '2.25rem' }],   // 28px (was 30px)
+            '4xl': ['2rem', { lineHeight: '2.5rem' }],       // 32px (was 36px)
+          },
+          borderRadius: {
+            'none': '0',
+            'sm': '5px',
+            DEFAULT: '5px',
+            'md': '5px',
+            'lg': '5px',
+            'xl': '5px',
+            '2xl': '5px',
+            '3xl': '5px',
+            'full': '9999px',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Custom Animations -->
+  <style>
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    /* Smooth transitions */
+    * {
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Global border radius override */
+    .rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
+      border-radius: 5px !important;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  
   <script src="{{ url_for('static', filename='js/logout.js') }}"></script>
   <script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
+  
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
-  {% include 'header.html' %}
-  <div class="dashboard-container">
-    {% include 'sidebar.html' %}
-    <main class="main-content">
-      {% block content %}
-      <!-- Page specific content injected here -->
-      {% endblock %}
-    </main>
+<body class="h-full font-sans antialiased">
+  <div class="min-h-full">
+    {% include 'header.html' %}
+    
+    <div class="flex h-screen bg-gray-50 pt-16">
+      {% include 'sidebar.html' %}
+      
+      <!-- Main content -->
+      <main class="flex-1 overflow-y-auto focus:outline-none">
+        <div class="py-6">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+            {% block content %}
+            <!-- Page specific content injected here -->
+            {% endblock %}
+          </div>
+        </div>
+      </main>
+    </div>
+    
+    {% include 'footer.html' %}
   </div>
-  {% include 'footer.html' %}
+  
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>
-
-

@@ -1,22 +1,163 @@
-<aside class="sidebar">
-  <nav class="sidebar-nav">
-    <ul>
-      <li class="nav-item {% if request.path.startswith('/dashboard') %}active{% endif %}">
-        <a href="{{ url_for('dashboard.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      </li>
-      <li class="nav-item {% if request.path.startswith('/claim_insurance') %}active{% endif %}">
-        <a href="{{ url_for('claim.claim_insurance') }}"><i class="fas fa-file-medical-alt"></i> Add Insurance</a>
-      </li>
-      <li class="nav-item {% if request.path.startswith('/insurance_claims_detail') %}active{% endif %}">
-        <a href="{{ url_for('claim.insurance_claims_detail') }}"><i class="fas fa-file-medical-alt"></i> Add Claim</a>
-      </li>
-      <li class="nav-item {% if request.path.startswith('/insurance_report') %}active{% endif %}">
-        <a href="{{ url_for('claim.insurance_report') }}""><i class="fas fa-file-alt"></i> Report</a>
-      </li>
-      <li class="nav-item">
-        <a href="#" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      </li>
-      <!-- other nav items -->
-    </ul>
-  </nav>
+<!-- Professional Sidebar with Enhanced UI -->
+<aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-16 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0" aria-label="Sidebar">
+  <div class="h-full flex flex-col">
+    <!-- Main Navigation -->
+    <div class="flex-1 px-3 py-4 overflow-y-auto">
+      <!-- User Profile Section -->
+      <div class="mb-6 p-3 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">User Dashboard</p>
+            <p class="text-xs text-gray-500 truncate">Proclaim</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="space-y-1">
+        <!-- Main Section -->
+        <div class="mb-4">
+          <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Main</p>
+          
+          <!-- Dashboard -->
+          <a href="{{ url_for('dashboard_pages.dashboard') }}" 
+             class="group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out {% if request.path.startswith('/dashboard') %}text-blue-600 bg-blue-50 border-r-3 border-blue-600{% else %}text-gray-700 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <div class="w-8 h-8 flex items-center justify-center mr-3 transition-colors duration-150">
+              {% if request.path.startswith('/dashboard') %}
+                <i class="fas fa-th-large text-blue-600"></i>
+              {% else %}
+                <i class="fas fa-th-large text-gray-400 group-hover:text-blue-600"></i>
+              {% endif %}
+            </div>
+            <span class="flex-1">Dashboard</span>
+            {% if request.path.startswith('/dashboard') %}
+              <span class="w-1.5 h-1.5 bg-blue-600"></span>
+            {% endif %}
+          </a>
+        </div>
+
+        <!-- Insurance Section -->
+        <div class="mb-4">
+          <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Insurance</p>
+          
+          <!-- Insurances List -->
+          <a href="{{ url_for('insurance_pages.insurances_list') }}" 
+             class="group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out {% if request.path.startswith('/insurances') or request.path.startswith('/claim_insurance') %}text-blue-600 bg-blue-50 border-r-3 border-blue-600{% else %}text-gray-700 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <div class="w-8 h-8 flex items-center justify-center mr-3 transition-colors duration-150">
+              {% if request.path.startswith('/insurances') or request.path.startswith('/claim_insurance') %}
+                <i class="fas fa-shield-alt text-blue-600"></i>
+              {% else %}
+                <i class="fas fa-shield-alt text-gray-400 group-hover:text-blue-600"></i>
+              {% endif %}
+            </div>
+            <span class="flex-1">Insurances</span>
+            {% if request.path.startswith('/insurances') or request.path.startswith('/claim_insurance') %}
+              <span class="w-1.5 h-1.5 bg-blue-600"></span>
+            {% endif %}
+          </a>
+          
+          <!-- Claims List -->
+          <a href="{{ url_for('insurance_pages.claims_list') }}" 
+             class="group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out {% if request.path.startswith('/claims') or request.path.startswith('/insurance_claims_detail') %}text-blue-600 bg-blue-50 border-r-3 border-blue-600{% else %}text-gray-700 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <div class="w-8 h-8 flex items-center justify-center mr-3 transition-colors duration-150">
+              {% if request.path.startswith('/claims') or request.path.startswith('/insurance_claims_detail') %}
+                <i class="fas fa-file-medical-alt text-blue-600"></i>
+              {% else %}
+                <i class="fas fa-file-medical-alt text-gray-400 group-hover:text-blue-600"></i>
+              {% endif %}
+            </div>
+            <span class="flex-1">Claims</span>
+            {% if request.path.startswith('/claims') or request.path.startswith('/insurance_claims_detail') %}
+              <span class="w-1.5 h-1.5 bg-blue-600"></span>
+            {% endif %}
+          </a>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="mb-4">
+          <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Analytics</p>
+          
+          <!-- Reports -->
+          <a href="{{ url_for('insurance_pages.insurance_report') }}" 
+             class="group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out {% if request.path.startswith('/insurance_report') %}text-blue-600 bg-blue-50 border-r-3 border-blue-600{% else %}text-gray-700 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <div class="w-8 h-8 flex items-center justify-center mr-3 transition-colors duration-150">
+              {% if request.path.startswith('/insurance_report') %}
+                <i class="fas fa-chart-bar text-blue-600"></i>
+              {% else %}
+                <i class="fas fa-chart-bar text-gray-400 group-hover:text-blue-600"></i>
+              {% endif %}
+            </div>
+            <span class="flex-1">Reports</span>
+            {% if request.path.startswith('/insurance_report') %}
+              <span class="w-1.5 h-1.5 bg-blue-600"></span>
+            {% endif %}
+          </a>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="border-t border-gray-200 p-3 space-y-2">
+      <!-- Help Link -->
+      <a href="#" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150 ease-in-out">
+        <div class="w-8 h-8 flex items-center justify-center mr-3">
+          <i class="fas fa-question-circle text-gray-400 group-hover:text-blue-600"></i>
+        </div>
+        <span>Help & Support</span>
+      </a>
+
+      <!-- Settings Link -->
+      <a href="#" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150 ease-in-out">
+        <div class="w-8 h-8 flex items-center justify-center mr-3">
+          <i class="fas fa-cog text-gray-400 group-hover:text-blue-600"></i>
+        </div>
+        <span>Settings</span>
+      </a>
+
+      <!-- Logout -->
+      <a href="#" class="logout-link group flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-150 ease-in-out">
+        <div class="w-8 h-8 flex items-center justify-center mr-3">
+          <i class="fas fa-sign-out-alt text-gray-400 group-hover:text-red-600"></i>
+        </div>
+        <span>Logout</span>
+      </a>
+
+      <!-- Version Info -->
+      <div class="px-3 py-2 mt-2">
+        <p class="text-xs text-gray-400">Version 1.0.0</p>
+        <p class="text-xs text-gray-400">© 2025 Proclaim</p>
+      </div>
+    </div>
+  </div>
 </aside>
+
+<style>
+  /* Custom border-right width for active state */
+  .border-r-3 {
+    border-right-width: 3px;
+  }
+  
+  /* Smooth icon transitions */
+  #sidebar i {
+    transition: color 0.15s ease-in-out;
+  }
+  
+  /* Active state animation */
+  #sidebar a.active {
+    animation: slideIn 0.2s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateX(-5px);
+      opacity: 0.8;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>

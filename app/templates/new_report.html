@@ -210,12 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    fetch('/get_assessment_data?claims_code=' + encodeURIComponent(claimsCode))
+    fetch('/api/insurance/assessment?claims_code=' + encodeURIComponent(claimsCode))
       .then(response => {
         if (!response.ok) throw new Error('Assessment data not found');
         return response.json();
       })
-      .then(data => {
+      .then(result => {
+        const data = result.data;
         aiDecisionInput.value = data.ai_decision || '';
         // recommendedClaimInput.value = data.claim_recommended || '';
         recommendedClaimInput.value = (data.ai_decision === 'Negative (No Crack)') ? 0 : (data.claim_recommended || '');
@@ -237,9 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInputs();
       return;
     }
-    fetch('/get_policy_dropdown?insurance_code=' + insuranceCode)
+    fetch('/api/insurance/policy-numbers?insurance_code=' + insuranceCode)
       .then(res => res.json())
-      .then(data => {
+      .then(result => {
+        const data = result.policy_numbers;
         let options = '<option value="">Select Policy Code</option>';
         data.forEach(policy => {
           options += `<option value="${policy}"${policy === selectedPolicy ? ' selected' : ''}>${policy}</option>`;
@@ -258,9 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInputs();
       return;
     }
-    fetch('/get_claims_code_dropdown?policy_number=' + policyCode)
+    fetch('/api/insurance/claims?policy_number=' + policyCode)
       .then(res => res.json())
-      .then(data => {
+      .then(result => {
+        const data = result.claims_codes;
         let options = '<option value="">Select Claim Code</option>';
         data.forEach(claim => {
           options += `<option value="${claim}"${claim === selectedClaim ? ' selected' : ''}>${claim}</option>`;

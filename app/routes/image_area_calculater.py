@@ -201,7 +201,7 @@ def calculate_crack_area(image_path, pixels_per_inch=96, save_plot=True, save_pa
     # --- Load Image ---
     image = cv2.imread(image_path)
     if image is None:
-        raise ValueError(f"❌ Image not found or unreadable: {image_path}")
+        raise ValueError(f"Image not found or unreadable: {image_path}")
 
     # --- Convert to Grayscale & Enhance ---
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -240,6 +240,7 @@ def calculate_crack_area(image_path, pixels_per_inch=96, save_plot=True, save_pa
 
     # --- Visualization (Headless) ---
     saved_plot_path = None
+    filename = None
     if save_plot:
         overlay = image.copy()
         cv2.drawContours(overlay, [largest_contour], -1, (255, 0, 0), 2)  # Red cracks
@@ -260,11 +261,13 @@ def calculate_crack_area(image_path, pixels_per_inch=96, save_plot=True, save_pa
         if save_path is None:
             filename = f"crack_detection_result_small_{random_number}.png"
             save_path = os.path.join(os.path.dirname(image_path), filename)
+        else:
+            filename = os.path.basename(save_path)
 
         plt.savefig(save_path, dpi=100, bbox_inches='tight')
         plt.close(fig)
         saved_plot_path = save_path
-        print(f"✅ Plot saved (frontend size): {save_path}")
+        print(f"Plot saved (frontend size): {save_path}")
 
     return {
         'status': 'success',
@@ -273,5 +276,5 @@ def calculate_crack_area(image_path, pixels_per_inch=96, save_plot=True, save_pa
         'crack_area': round(area_sqft, 3),
         'plot_path': saved_plot_path,
         'filename': filename,
-        'message': '✅ Crack measurements calculated successfully (sq.ft)'
+        'message': 'Crack measurements calculated successfully (sq.ft)'
     }

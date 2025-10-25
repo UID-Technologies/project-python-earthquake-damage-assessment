@@ -1,76 +1,568 @@
 {% extends "base.html" %}
-{% block title %}Damaged Property Report{% endblock %}
+
+{% block title %}Insurance Claims Reports - Proclaim{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h1>Damaged Property Report</h1>
-  <div class="table-wrapper">
-    <table class="report-table" id="reportTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Insurance Code</th>
-          <th>Insurance Type</th>
-          <th>Policy Number</th>
-          <th>Claims Code</th>
-          <th>Property Type</th>
-          <th>Wall Type</th>
-          <th>Rate/Sq Ft</th>
-          <th>Confidence</th>
-          <th>Crack %</th>
-          <th>AI Decision</th>
-          <th>Picture</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Will populate dynamically from JS -->
-      </tbody>
-    </table>
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Insurance Claims Reports</h1>
+        <p class="mt-2 text-sm text-gray-600">View and manage all submitted insurance claims with AI assessments</p>
+      </div>
+      <div class="mt-4 md:mt-0 flex space-x-3">
+        <button
+          onclick="exportToCSV()"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+        >
+          <i class="fas fa-download mr-2"></i>
+          Export CSV
+        </button>
+        <button
+          onclick="printReport()"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-xl transition duration-150"
+        >
+          <i class="fas fa-print mr-2"></i>
+          Print Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div id="stats-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Stats will be dynamically loaded -->
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Search -->
+      <div class="md:col-span-2">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            type="text"
+            id="search"
+            placeholder="Search by name, email, claim code..."
+            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+            onkeyup="filterTable()"
+          />
+        </div>
+      </div>
+
+      <!-- AI Decision Filter -->
+      <div>
+        <label for="aiFilter" class="block text-sm font-medium text-gray-700 mb-2">AI Decision</label>
+        <select
+          id="aiFilter"
+          class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+          onchange="filterTable()"
+        >
+          <option value="">All Decisions</option>
+          <option value="Positive (Crack Detected)">Crack Detected</option>
+          <option value="Negative (No Crack)">No Crack</option>
+        </select>
+      </div>
+
+      <!-- Insurance Type Filter -->
+      <div>
+        <label for="typeFilter" class="block text-sm font-medium text-gray-700 mb-2">Insurance Type</label>
+        <select
+          id="typeFilter"
+          class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+          onchange="filterTable()"
+        >
+          <option value="">All Types</option>
+          <option value="earthquake">Earthquake</option>
+          <option value="flood">Flood</option>
+          <option value="comprehensive">Comprehensive</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reports Table Card -->
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <!-- Card Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-file-alt mr-3"></i>
+          Claims Report Data
+        </h2>
+        <span id="record-count" class="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 text-white font-semibold text-sm">
+          0 Records
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-600 font-medium">Loading reports...</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 px-4">
+      <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+        <i class="fas fa-inbox text-gray-400 text-4xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">No Claims Found</h3>
+      <p class="text-sm text-gray-500 text-center max-w-sm">
+        There are no insurance claims to display. Start by submitting a new claim.
+      </p>
+      <a
+        href="/insurance_claims_detail"
+        class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition duration-150"
+      >
+        <i class="fas fa-plus mr-2"></i>
+        Submit New Claim
+      </a>
+    </div>
+
+    <!-- Table Container -->
+    <div id="table-container" class="hidden overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-user mr-1"></i> Insured
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-shield-alt mr-1"></i> Policy Info
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-file-contract mr-1"></i> Claim Code
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-home mr-1"></i> Property
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-dollar-sign mr-1"></i> Rate
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-robot mr-1"></i> AI Analysis
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-image mr-1"></i> Image
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <i class="fas fa-cogs mr-1"></i> Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody" class="bg-white divide-y divide-gray-200">
+          <!-- Rows will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div id="imageModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 animate-fade-in">
+  <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-2xl rounded-2xl bg-white">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-bold text-gray-900">Property Damage Image</h3>
+      <button
+        onclick="closeModal()"
+        class="text-gray-400 hover:text-gray-600 transition duration-150"
+      >
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+    </div>
+    
+    <!-- Modal Body -->
+    <div class="mt-4">
+      <img id="modalImage" src="" alt="Property Damage" class="w-full h-auto rounded-lg shadow-lg" />
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="mt-6 flex justify-end space-x-3">
+      <button
+        onclick="downloadImage()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
+      >
+        <i class="fas fa-download mr-2"></i>
+        Download
+      </button>
+      <button
+        onclick="closeModal()"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition duration-150"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
+
 <script>
-  async function fetchInsuranceReport() {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch('/api/insurance_report', {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        }
-      });
-      if(!response.ok) {
-        throw new Error('Failed to fetch: ' + response.statusText);
-      }
-      const records = await response.json();
+let allReports = [];
 
-      const tbody = document.querySelector("#reportTable tbody");
-      tbody.innerHTML = '';
-
-      for(const rec of records) {
-        const tr = document.createElement('tr');
-        
-        tr.innerHTML = `
-          <td title="${rec.name}">${rec.name}</td>
-          <td title="${rec.email}">${rec.email}</td>
-          <td title="${rec.insurance_code}">${rec.insurance_code}</td>
-          <td title="${rec.insurance_type}">${rec.insurance_type}</td>
-          <td title="${rec.policy_number}">${rec.policy_number}</td>
-          <td title="${rec.claims_code}">${rec.claims_code}</td>
-          <td title="${rec.property_type || ''}">${rec.property_type || ''}</td>
-          <td title="${rec.wall_type || ''}">${rec.wall_type || ''}</td>
-          <td>${rec.rate_per_sqft}</td>
-          <td>${(rec.confidence || 0).toFixed(2)}%</td>
-          <td>${(rec.crack_percent || 0).toFixed(2)}%</td>
-          <td><span class="${rec.ai_decision === 'Positive (Crack Detected)' ? 'badge badge-success' : 'badge badge-danger'}">${rec.ai_decision}</span></td>
-          <td>${rec.file_name ? `<img src="/static/upload_image/${rec.file_name}" class="thumb" alt="Image" />` : 'No Image'}</td>
-        `;
-        tbody.appendChild(tr);
+// Fetch and display insurance reports
+async function fetchInsuranceReport() {
+  const token = localStorage.getItem('token');
+  const loadingState = document.getElementById('loading-state');
+  const emptyState = document.getElementById('empty-state');
+  const tableContainer = document.getElementById('table-container');
+  
+  try {
+    const response = await fetch('/api/insurance/reports', {
+      headers: {
+        'Authorization': 'Bearer ' + token
       }
-    } catch(error) {
-      console.error('Error loading insurance report', error);
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch: ' + response.statusText);
     }
+    
+    const data = await response.json();
+    allReports = data.reports || [];
+    
+    loadingState.classList.add('hidden');
+    
+    if (allReports.length === 0) {
+      emptyState.classList.remove('hidden');
+      tableContainer.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      tableContainer.classList.remove('hidden');
+      renderReports(allReports);
+      updateStats(allReports);
+    }
+    
+  } catch (error) {
+    console.error('Error loading insurance report', error);
+    loadingState.classList.add('hidden');
+    emptyState.classList.remove('hidden');
   }
-  fetchInsuranceReport();
+}
+
+// Render reports in table
+function renderReports(reports) {
+  const tbody = document.getElementById('reportTableBody');
+  tbody.innerHTML = '';
+  
+  reports.forEach((rec, index) => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 transition duration-150';
+    
+    // AI Decision badge color
+    const isPositive = rec.ai_decision === 'Positive (Crack Detected)';
+    const badgeClass = isPositive 
+      ? 'bg-red-100 text-red-800' 
+      : 'bg-green-100 text-green-800';
+    
+    // Confidence color
+    const confidence = parseFloat(rec.confidence || 0);
+    const confidenceClass = confidence >= 80 
+      ? 'text-green-600 font-semibold' 
+      : confidence >= 50 
+        ? 'text-yellow-600 font-semibold' 
+        : 'text-red-600 font-semibold';
+    
+    tr.innerHTML = `
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <span class="text-white font-bold">${rec.name ? rec.name.charAt(0).toUpperCase() : 'U'}</span>
+          </div>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-gray-900">${rec.name || 'N/A'}</div>
+            <div class="text-sm text-gray-500">${rec.email || 'N/A'}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="text-sm">
+          <div class="font-medium text-gray-900">${rec.insurance_code || 'N/A'}</div>
+          <div class="text-gray-500">Policy: ${rec.policy_number || 'N/A'}</div>
+          <div class="text-xs text-gray-400 mt-1">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+              ${rec.insurance_type || 'N/A'}
+            </span>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm font-mono font-semibold text-blue-600">${rec.claims_code || 'N/A'}</div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="text-sm">
+          <div class="text-gray-900">${rec.property_type || 'N/A'}</div>
+          <div class="text-gray-500 text-xs">${rec.wall_type || 'N/A'}</div>
+        </div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm font-semibold text-gray-900">$${rec.rate_per_sqft || '0'}</div>
+        <div class="text-xs text-gray-500">per sq ft</div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="space-y-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
+            ${isPositive ? '<i class="fas fa-exclamation-triangle mr-1"></i>' : '<i class="fas fa-check-circle mr-1"></i>'}
+            ${rec.ai_decision || 'N/A'}
+          </span>
+          <div class="text-xs ${confidenceClass}">
+            <i class="fas fa-chart-line mr-1"></i>
+            Confidence: ${confidence.toFixed(1)}%
+          </div>
+          <div class="text-xs text-gray-500">
+            Crack: ${(parseFloat(rec.crack_percent) || 0).toFixed(1)}%
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        ${rec.file_name 
+          ? `<button onclick="showImage('/static/upload_image/${rec.file_name}')" 
+               class="group relative">
+               <img src="/static/upload_image/${rec.file_name}" 
+                    alt="Damage" 
+                    class="h-16 w-16 rounded-lg object-cover border-2 border-gray-200 group-hover:border-blue-500 transition duration-150 cursor-pointer shadow-sm hover:shadow-lg" />
+               <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition duration-150 flex items-center justify-center">
+                 <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition duration-150"></i>
+               </div>
+             </button>` 
+          : '<div class="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>'
+        }
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm">
+        <div class="flex space-x-2">
+          <button
+            onclick="viewDetails('${rec.claims_code}')"
+            class="text-blue-600 hover:text-blue-900 transition duration-150"
+            title="View Details"
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+          <button
+            onclick="printRow(${index})"
+            class="text-green-600 hover:text-green-900 transition duration-150"
+            title="Print"
+          >
+            <i class="fas fa-print"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+  
+  updateRecordCount(reports.length);
+}
+
+// Update statistics cards
+function updateStats(reports) {
+  const totalClaims = reports.length;
+  const crackDetected = reports.filter(r => r.ai_decision === 'Positive (Crack Detected)').length;
+  const noCrack = reports.filter(r => r.ai_decision === 'Negative (No Crack)').length;
+  const avgConfidence = reports.reduce((sum, r) => sum + (parseFloat(r.confidence) || 0), 0) / totalClaims;
+  
+  const statsHTML = `
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition duration-300">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+          <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-600">Total Claims</p>
+          <p class="text-2xl font-bold text-gray-900">${totalClaims}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition duration-300">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-red-100 rounded-lg p-3">
+          <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-600">Cracks Detected</p>
+          <p class="text-2xl font-bold text-gray-900">${crackDetected}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition duration-300">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+          <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-600">No Damage</p>
+          <p class="text-2xl font-bold text-gray-900">${noCrack}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition duration-300">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+          <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-600">Avg Confidence</p>
+          <p class="text-2xl font-bold text-gray-900">${avgConfidence.toFixed(1)}%</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('stats-cards').innerHTML = statsHTML;
+}
+
+// Filter table based on search and filters
+function filterTable() {
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  const aiFilter = document.getElementById('aiFilter').value;
+  const typeFilter = document.getElementById('typeFilter').value;
+  
+  const filteredReports = allReports.filter(rec => {
+    const matchesSearch = 
+      (rec.name || '').toLowerCase().includes(searchTerm) ||
+      (rec.email || '').toLowerCase().includes(searchTerm) ||
+      (rec.claims_code || '').toLowerCase().includes(searchTerm) ||
+      (rec.insurance_code || '').toLowerCase().includes(searchTerm);
+    
+    const matchesAI = !aiFilter || rec.ai_decision === aiFilter;
+    const matchesType = !typeFilter || rec.insurance_type === typeFilter;
+    
+    return matchesSearch && matchesAI && matchesType;
+  });
+  
+  renderReports(filteredReports);
+}
+
+// Update record count
+function updateRecordCount(count) {
+  document.getElementById('record-count').textContent = `${count} Record${count !== 1 ? 's' : ''}`;
+}
+
+// Show image in modal
+function showImage(imagePath) {
+  const modal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  modalImage.src = imagePath;
+  modal.classList.remove('hidden');
+}
+
+// Close modal
+function closeModal() {
+  document.getElementById('imageModal').classList.add('hidden');
+}
+
+// Download image
+function downloadImage() {
+  const imageSrc = document.getElementById('modalImage').src;
+  const link = document.createElement('a');
+  link.href = imageSrc;
+  link.download = imageSrc.split('/').pop();
+  link.click();
+}
+
+// View details
+function viewDetails(claimCode) {
+  alert(`View details for claim: ${claimCode}\n\n(This would open a detailed view in production)`);
+}
+
+// Print row
+function printRow(index) {
+  const report = allReports[index];
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Claim Report - ${report.claims_code}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #2563eb; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+          th { background-color: #f3f4f6; }
+        </style>
+      </head>
+      <body>
+        <h1>Insurance Claim Report</h1>
+        <table>
+          <tr><th>Name</th><td>${report.name}</td></tr>
+          <tr><th>Email</th><td>${report.email}</td></tr>
+          <tr><th>Insurance Code</th><td>${report.insurance_code}</td></tr>
+          <tr><th>Policy Number</th><td>${report.policy_number}</td></tr>
+          <tr><th>Claim Code</th><td>${report.claims_code}</td></tr>
+          <tr><th>Property Type</th><td>${report.property_type || 'N/A'}</td></tr>
+          <tr><th>Wall Type</th><td>${report.wall_type || 'N/A'}</td></tr>
+          <tr><th>AI Decision</th><td>${report.ai_decision}</td></tr>
+          <tr><th>Confidence</th><td>${report.confidence}%</td></tr>
+          <tr><th>Crack Percentage</th><td>${report.crack_percent}%</td></tr>
+        </table>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// Export to CSV
+function exportToCSV() {
+  const headers = ['Name', 'Email', 'Insurance Code', 'Policy Number', 'Claim Code', 'Property Type', 'Wall Type', 'Rate/SqFt', 'AI Decision', 'Confidence', 'Crack %'];
+  const rows = allReports.map(rec => [
+    rec.name || '',
+    rec.email || '',
+    rec.insurance_code || '',
+    rec.policy_number || '',
+    rec.claims_code || '',
+    rec.property_type || '',
+    rec.wall_type || '',
+    rec.rate_per_sqft || '',
+    rec.ai_decision || '',
+    rec.confidence || '',
+    rec.crack_percent || ''
+  ]);
+  
+  let csvContent = headers.join(',') + '\n';
+  rows.forEach(row => {
+    csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `insurance_claims_report_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
+
+// Print full report
+function printReport() {
+  window.print();
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeModal();
+  }
+});
+
+// Initialize
+fetchInsuranceReport();
 </script>
+
+<style>
+@media print {
+  #stats-cards, button, .bg-gradient-to-r { display: none !important; }
+}
+</style>
+
 {% endblock %}

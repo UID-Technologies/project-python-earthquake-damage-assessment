@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     logoutLink.addEventListener('click', async function (e) {
       e.preventDefault();
       const token = localStorage.getItem('token');
-      await fetch('/api/logout', {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token }
       });

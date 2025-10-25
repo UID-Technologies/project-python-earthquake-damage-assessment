@@ -10,3 +10,6 @@ torch
 torchvision 
 timm 
 pillow
+opencv-python-headless
+numpy
+matplotlib

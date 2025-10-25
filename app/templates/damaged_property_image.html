@@ -1,46 +1,340 @@
 {% extends "base.html" %}
 
-{% block title %}Damaged Property Image Upload{% endblock %}
+{% block title %}Upload Damaged Property Images - Proclaim{% endblock %}
 
 {% block content %}
-  <div class="damaged-image-page">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="title-container">
-          <h1 class="login-title">Damaged Property Image Upload</h1>
-          <p class="login-subtitle">Upload images and provide details below.</p>
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Upload Damaged Property Images</h1>
+    <p class="mt-2 text-sm text-gray-600">Upload photos of the damaged property for AI analysis</p>
+  </div>
+
+  <!-- Upload Card -->
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl">
+    <!-- Card Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white flex items-center">
+            <i class="fas fa-cloud-upload-alt mr-3"></i>
+            Upload Damage Photos
+          </h2>
+          <p class="mt-1 text-sm text-indigo-100">AI will analyze the images for crack detection</p>
+        </div>
+        <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+          <p class="text-white font-semibold text-sm">
+            <i class="fas fa-info-circle mr-1"></i>
+            MAX 5 Images allowed
+          </p>
         </div>
       </div>
+    </div>
 
+    <!-- Upload Form -->
+    <div class="p-8">
       <form id="damagedPropertyImageForm" action="/submit_damaged_property_image" method="POST" enctype="multipart/form-data">
-        <input type="hidden" id="claim_property_details_id" name="claim_property_details_id" class="login-input" value="" />
-         <input type="hidden" id="claimsId" name="claims_id" class="login-input" value="{{claims_id}}" />
-         <input type="hidden" id="claimsCode" name="claims_code" class="login-input" value="{{claims_code}}" />
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="fileUpload" class="input-label">File Upload</label>
-            <input type="file" id="fileUpload" name="file_name" class="login-input" accept="image/*" required />
+        <input type="hidden" id="claimsId" name="claims_id" value="{{claims_id}}" />
+        <input type="hidden" id="claimsCode" name="claims_code" value="{{claims_code}}" />
+        <input type="hidden" id="file_format" name="file_format" value="image" />
+        
+        <!-- Drag & Drop Zone -->
+        <div class="mb-8">
+          <div id="drop-zone" class="relative border-3 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-indigo-400 transition-all duration-300 bg-gradient-to-br from-gray-50 to-indigo-50/30">
+            <div class="space-y-4">
+              <!-- Cloud Icon -->
+              <div class="flex justify-center">
+                <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                  <i class="fas fa-cloud-upload-alt text-white text-4xl"></i>
+                </div>
+              </div>
+              
+              <!-- Text -->
+              <div>
+                <p class="text-lg font-semibold text-gray-700">Drag & drop your files here</p>
+                <p class="text-sm text-gray-500 mt-1">Supported formats: JPG, PNG, JPEG</p>
+              </div>
+              
+              <!-- OR Divider -->
+              <div class="flex items-center justify-center space-x-4">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="text-sm font-medium text-gray-500">OR</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+              </div>
+              
+              <!-- Browse Button -->
+              <div>
+                <label for="fileUpload" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg hover:shadow-xl transition duration-150 ease-in-out cursor-pointer transform hover:-translate-y-0.5">
+                  <i class="fas fa-folder-open mr-2"></i>
+                  Browse files
+                </label>
+                <input type="file" id="fileUpload" name="file_name" class="hidden" accept="image/*" required multiple />
+              </div>
+            </div>
+            
+            <!-- Drag overlay -->
+            <div id="drag-overlay" class="hidden absolute inset-0 bg-indigo-500/10 backdrop-blur-sm rounded-2xl border-3 border-indigo-500 flex items-center justify-center">
+              <div class="text-center">
+                <i class="fas fa-download text-indigo-600 text-5xl mb-3"></i>
+                <p class="text-xl font-bold text-indigo-600">Drop files here</p>
+              </div>
+            </div>
           </div>
-          <!-- <div class="form-group half-width">
-            <label for="fileFormat" class="input-label">File Format</label>
-            <select id="fileFormat" name="file_format" class="login-input" required>
-              <option value="">Select format</option>
-              <option value="jpg">JPG</option>
-              <option value="png">PNG</option>
-              <option value="jpeg">JPEG</option>
-            </select>
-          </div> -->
         </div>
 
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="fileDescription" class="input-label">File Description</label>
-            <textarea id="fileDescription" name="file_desc" class="login-input" rows="4" placeholder="Add description here"></textarea>
+        <!-- File Description -->
+        <div class="mb-8">
+          <label for="fileDescription" class="block text-sm font-medium text-gray-700 mb-2">
+            File Description (Optional)
+          </label>
+          <textarea
+            id="fileDescription"
+            name="file_desc"
+            rows="3"
+            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm"
+            placeholder="Add any additional notes about the damage..."
+          ></textarea>
+        </div>
+
+        <!-- Uploading Files Section -->
+        <div id="files-section" class="hidden mb-8">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-file-upload text-indigo-600 mr-2"></i>
+            Uploading files
+          </h3>
+          <div id="file-list" class="space-y-3">
+            <!-- File items will be dynamically added here -->
           </div>
         </div>
-        <button type="submit" class="login-button">Next</button>
-        <!-- <button type="button" class="login-button" onclick="location.href='/damaged_property_calculation'">Next</button> -->
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+          <a
+            href="/insurance_claims_detail"
+            class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+          >
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back
+          </a>
+          
+          <button
+            type="submit"
+            id="submit-btn"
+            class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg hover:shadow-xl transition duration-150 ease-in-out transform hover:-translate-y-0.5"
+          >
+            Next
+            <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </div>
       </form>
     </div>
   </div>
+
+  <!-- Progress Info Card -->
+  <div class="mt-6 bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-lg">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-robot text-indigo-500 text-xl"></i>
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-indigo-900">AI-Powered Analysis</h3>
+        <div class="mt-2 text-sm text-indigo-700">
+          <p>After uploading, our AI will automatically:</p>
+          <ul class="list-disc list-inside mt-2 space-y-1">
+            <li>Detect cracks with confidence scoring</li>
+            <li>Measure crack dimensions (length, width, area)</li>
+            <li>Generate visual overlay images</li>
+            <li>Calculate damage estimates</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.border-3 {
+  border-width: 3px;
+}
+
+#drop-zone.dragover {
+  border-color: #6366f1;
+  background: linear-gradient(to bottom right, #eef2ff, #e0e7ff);
+}
+</style>
+
+<script>
+// File upload handling
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('fileUpload');
+const fileList = document.getElementById('file-list');
+const filesSection = document.getElementById('files-section');
+const dragOverlay = document.getElementById('drag-overlay');
+const form = document.getElementById('damagedPropertyImageForm');
+
+let selectedFiles = [];
+const MAX_FILES = 5;
+
+// Prevent default drag behaviors
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, preventDefaults, false);
+  document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+// Highlight drop zone when dragging over
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+  dropZone.classList.add('dragover');
+  dragOverlay.classList.remove('hidden');
+}
+
+function unhighlight(e) {
+  dropZone.classList.remove('dragover');
+  dragOverlay.classList.add('hidden');
+}
+
+// Handle dropped files
+dropZone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles(files);
+}
+
+// Handle selected files from browse button
+fileInput.addEventListener('change', function(e) {
+  handleFiles(this.files);
+});
+
+function handleFiles(files) {
+  files = [...files];
+  
+  if (files.length > MAX_FILES) {
+    alert(`Maximum ${MAX_FILES} images allowed!`);
+    files = files.slice(0, MAX_FILES);
+  }
+  
+  // For form submission, we'll use the first file only (current backend limitation)
+  // In a real implementation, you'd handle multiple file uploads
+  selectedFiles = files;
+  
+  displayFiles(files);
+}
+
+function displayFiles(files) {
+  filesSection.classList.remove('hidden');
+  fileList.innerHTML = '';
+  
+  files.forEach((file, index) => {
+    const fileItem = createFileItem(file, index);
+    fileList.appendChild(fileItem);
+    
+    // Simulate upload progress
+    simulateUpload(fileItem, index);
+  });
+}
+
+function createFileItem(file, index) {
+  const div = document.createElement('div');
+  div.className = 'bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200';
+  div.innerHTML = `
+    <div class="flex items-center space-x-4">
+      <div class="flex-shrink-0">
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+          <i class="fas fa-image text-white text-xl"></i>
+        </div>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+        <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+        <div class="mt-2">
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="progress-bar bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 mt-1 progress-text">0%</p>
+        </div>
+      </div>
+      <div class="flex-shrink-0">
+        <button type="button" class="remove-btn text-gray-400 hover:text-red-600 transition-colors duration-200" onclick="removeFile(${index})">
+          <i class="fas fa-times text-lg"></i>
+        </button>
+        <i class="fas fa-check-circle text-green-500 text-xl hidden success-icon"></i>
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+function simulateUpload(fileItem, index) {
+  const progressBar = fileItem.querySelector('.progress-bar');
+  const progressText = fileItem.querySelector('.progress-text');
+  const removeBtn = fileItem.querySelector('.remove-btn');
+  const successIcon = fileItem.querySelector('.success-icon');
+  
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      
+      // Show success
+      removeBtn.classList.add('hidden');
+      successIcon.classList.remove('hidden');
+      progressText.textContent = 'Complete';
+      progressText.classList.add('text-green-600', 'font-semibold');
+    }
+    
+    progressBar.style.width = progress + '%';
+    progressText.textContent = Math.round(progress) + '%';
+  }, 200);
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  if (selectedFiles.length === 0) {
+    filesSection.classList.add('hidden');
+    fileInput.value = '';
+  } else {
+    displayFiles(selectedFiles);
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Form submission
+form.addEventListener('submit', function(e) {
+  const submitBtn = document.getElementById('submit-btn');
+  const originalHTML = submitBtn.innerHTML;
+  
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+  
+  // Re-enable if needed (form will redirect on success)
+  setTimeout(() => {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalHTML;
+  }, 5000);
+});
+</script>
+
 {% endblock %}

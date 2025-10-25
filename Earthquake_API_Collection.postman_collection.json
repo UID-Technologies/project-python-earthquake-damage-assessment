@@ -1,0 +1,713 @@
+{
+  "info": {
+    "name": "Earthquake Damage Assessment API",
+    "description": "Complete API collection for Earthquake Damage Assessment Tool",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "    pm.environment.set('jwt_token', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login to get JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"mobile\": \"+1234567890\",\n  \"address\": \"123 Main St\",\n  \"username\": \"johndoe\",\n  \"password\": \"securepass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "signup"]
+            },
+            "description": "Register a new user"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout and invalidate token"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "Verify if token is valid"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "user"]
+            },
+            "description": "Get current user information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "stats"]
+            },
+            "description": "Get comprehensive dashboard statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "AI Detection",
+      "item": [
+        {
+          "name": "Detect Crack",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/detection/crack",
+              "host": ["{{base_url}}"],
+              "path": ["api", "detection", "crack"]
+            },
+            "description": "Detect cracks in uploaded image using AI"
+          },
+          "response": []
+        },
+        {
+          "name": "Detect Earthquake (Legacy)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/detect-earthquake",
+              "host": ["{{base_url}}"],
+              "path": ["api", "detect-earthquake"]
+            },
+            "description": "Legacy endpoint for crack detection"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Insurance",
+      "item": [
+        {
+          "name": "Get User Insurance Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/policies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "policies"]
+            },
+            "description": "Get all insurance policies for current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Policy Numbers",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/policy-numbers?insurance_code=INS-2024-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "policy-numbers"],
+              "query": [
+                {
+                  "key": "insurance_code",
+                  "value": "INS-2024-001",
+                  "description": "Insurance code"
+                }
+              ]
+            },
+            "description": "Get policy numbers by insurance code"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All User Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/claims/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "claims", "all"]
+            },
+            "description": "Get all claims for current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Policy",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/claims?policy_number=POL-123456",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "claims"],
+              "query": [
+                {
+                  "key": "policy_number",
+                  "value": "POL-123456",
+                  "description": "Policy number"
+                }
+              ]
+            },
+            "description": "Get claims codes by policy number"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assessment Data",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/assessment?claims_code=CLM-2024-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "assessment"],
+              "query": [
+                {
+                  "key": "claims_code",
+                  "value": "CLM-2024-001",
+                  "description": "Claims code"
+                }
+              ]
+            },
+            "description": "Get assessment data for a claim"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Insurance Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "reports"]
+            },
+            "description": "Get all insurance reports"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Damage Calculation",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance/damage-calculation?claims_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance", "damage-calculation"],
+              "query": [
+                {
+                  "key": "claims_id",
+                  "value": "1",
+                  "description": "Claims ID"
+                }
+              ]
+            },
+            "description": "Get damage calculation for a claim"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Get Insurance Claims Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/insurance_claims_detail",
+              "host": ["{{base_url}}"],
+              "path": ["api", "insurance_claims_detail"]
+            },
+            "description": "Get insurance codes to start new claim"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Policy Numbers",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/get_policy?insurance_code=INS-2024-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "get_policy"],
+              "query": [
+                {
+                  "key": "insurance_code",
+                  "value": "INS-2024-001",
+                  "description": "Insurance code"
+                }
+              ]
+            },
+            "description": "Get policy numbers by insurance code"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pages (Form Submissions)",
+      "item": [
+        {
+          "name": "Submit Insurance Detail",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_code",
+                  "value": "INS-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "policy_number",
+                  "value": "POL-123456",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_from",
+                  "value": "2024-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_to",
+                  "value": "2025-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_type",
+                  "value": "Property",
+                  "type": "text"
+                },
+                {
+                  "key": "insured",
+                  "value": "John Doe",
+                  "type": "text"
+                },
+                {
+                  "key": "occupation",
+                  "value": "Engineer",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_details",
+                  "value": "Property insurance",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/submit_insurance_detail",
+              "host": ["{{base_url}}"],
+              "path": ["submit_insurance_detail"]
+            },
+            "description": "Submit insurance detail form"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Insurance Claims",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "user_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claims_code",
+                  "value": "CLM-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "insurance_id",
+                  "value": "INS-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "claim_details",
+                  "value": "Earthquake damage",
+                  "type": "text"
+                },
+                {
+                  "key": "time_of_loss",
+                  "value": "2024-10-20 14:30:00",
+                  "type": "text"
+                },
+                {
+                  "key": "situation_of_loss",
+                  "value": "Main building",
+                  "type": "text"
+                },
+                {
+                  "key": "cause_of_loss",
+                  "value": "Earthquake",
+                  "type": "text"
+                },
+                {
+                  "key": "policy_number",
+                  "value": "POL-123456",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/submit_insurance_claims",
+              "host": ["{{base_url}}"],
+              "path": ["submit_insurance_claims"]
+            },
+            "description": "Submit insurance claims form"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Damaged Property Image",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file_name",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "claims_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claims_code",
+                  "value": "CLM-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "file_format",
+                  "value": "jpg",
+                  "type": "text"
+                },
+                {
+                  "key": "file_desc",
+                  "value": "Damage photo",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/submit_damaged_property_image",
+              "host": ["{{base_url}}"],
+              "path": ["submit_damaged_property_image"]
+            },
+            "description": "Upload damaged property image"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Damaged Property Details",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "claims_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claim_property_details_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claims_code",
+                  "value": "CLM-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "property_type",
+                  "value": "Residential",
+                  "type": "text"
+                },
+                {
+                  "key": "wall_type",
+                  "value": "Brick",
+                  "type": "text"
+                },
+                {
+                  "key": "damage_area",
+                  "value": "150.75",
+                  "type": "text"
+                },
+                {
+                  "key": "rate_per_sqft",
+                  "value": "100.00",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/submit_damaged_property",
+              "host": ["{{base_url}}"],
+              "path": ["submit_damaged_property"]
+            },
+            "description": "Submit damaged property details"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Claim Report",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "claims_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claim_property_details_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "claims_code",
+                  "value": "CLM-2024-001",
+                  "type": "text"
+                },
+                {
+                  "key": "cpa_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "user_inference",
+                  "value": "User notes here",
+                  "type": "text"
+                },
+                {
+                  "key": "final_damage_area",
+                  "value": "150.00",
+                  "type": "text"
+                },
+                {
+                  "key": "final_damage_cost",
+                  "value": "15000.00",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/submit_claim_report",
+              "host": ["{{base_url}}"],
+              "path": ["submit_claim_report"]
+            },
+            "description": "Submit claim report with user inference"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
