@@ -105,11 +105,24 @@ def submit_insurance_claims():
     cause_of_loss = data.get('cause_of_loss')
     policy_number = data.get('policy_number')
 
-    if not user_id or not claims_code or not insurance_id:
-        return jsonify({"success": False, "message": "Missing required fields"}), 400
+    # Better validation with specific error messages
+    if not user_id:
+        return jsonify({"success": False, "error": "User ID is missing"}), 400
+    if not claims_code:
+        return jsonify({"success": False, "error": "Claims code is required"}), 400
+    if not insurance_id:
+        return jsonify({"success": False, "error": "Insurance code is required"}), 400
+    if not policy_number:
+        return jsonify({"success": False, "error": "Policy number is required"}), 400
 
     try:
         with conn.cursor() as cursor:
+            # Check if claims_code already exists
+            cursor.execute("SELECT id FROM claims WHERE claims_code = %s", (claims_code,))
+            existing = cursor.fetchone()
+            if existing:
+                return jsonify({"success": False, "error": "Claims code already exists. Please use a different code."}), 400
+            
             sql = """
                 INSERT INTO claims
                 (user_id, claims_code, insurance_id, claim_details, time_of_loss, situation_of_loss, cause_of_loss, is_active, status, created_by, policy_number)
@@ -123,11 +136,20 @@ def submit_insurance_claims():
             conn.commit()
             inserted_id = cursor.lastrowid
         
-        return redirect(f'/damaged_property_image?claims_id={inserted_id}&claims_code={claims_code}')
+        # Return JSON success response instead of redirect
+        return jsonify({
+            "success": True, 
+            "message": "Claim created successfully",
+            "claims_id": inserted_id,
+            "claims_code": claims_code
+        }), 201
+        
     except Exception as e:
         conn.rollback()
         current_app.logger.error(f"Error inserting claims: {e}")
-        return jsonify({"success": False, "message": "Error saving claims"}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
     finally:
         conn.close()
 
@@ -437,3 +459,8 @@ def insurance_report():
     """Render insurance report page"""
     return render_template("report.html")
 
+
+@insurance_pages_bp.route('/analyse_image', methods=['GET'])
+def analyse_image():
+    """Render image analysis page for batch processing"""
+    return render_template("analyse_image.html")

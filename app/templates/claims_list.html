@@ -212,26 +212,29 @@ function renderClaims(claims) {
     const incidentDate = claim.incident_date ? new Date(claim.incident_date).toLocaleDateString() : 'N/A';
     const claimDate = claim.claim_date ? new Date(claim.claim_date).toLocaleDateString() : 'N/A';
     
-    // Status badge
+    // Status badge with better mapping
     const statusColors = {
+      'active': 'bg-green-100 text-green-800',
+      'inactive': 'bg-amber-100 text-amber-800',
       'approved': 'bg-green-100 text-green-800',
       'pending': 'bg-amber-100 text-amber-800',
       'rejected': 'bg-red-100 text-red-800',
-      'processing': 'bg-blue-100 text-blue-800'
+      'processing': 'bg-blue-100 text-blue-800',
+      'completed': 'bg-green-100 text-green-800'
     };
-    const statusClass = statusColors[claim.claim_status] || 'bg-gray-100 text-gray-800';
+    const statusClass = statusColors[claim.claim_status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
     
     // Claim value formatting
-    const claimValue = claim.total_claim_value 
+    const claimValue = claim.total_claim_value && claim.total_claim_value > 0
       ? `$${parseFloat(claim.total_claim_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : 'N/A';
+      : 'Pending';
     
     // Recommendation badge
     const recommendBadge = claim.claim_recommended === 'yes' 
       ? '<span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i> Recommended</span>'
       : claim.claim_recommended === 'no'
       ? '<span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i> Not Recommended</span>'
-      : '';
+      : '<span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600"><i class="fas fa-hourglass-half mr-1"></i> In Review</span>';
     
     tr.innerHTML = `
       <td class="px-6 py-4">
@@ -252,8 +255,8 @@ function renderClaims(claims) {
       </td>
       <td class="px-6 py-4">
         <div class="text-sm text-gray-900">
-          <div><i class="fas fa-exclamation-triangle text-amber-500 mr-1"></i> ${incidentDate}</div>
-          <div class="mt-1"><i class="fas fa-calendar-alt text-gray-400 mr-1"></i> ${claimDate}</div>
+          <div title="Incident Date"><i class="fas fa-exclamation-triangle text-amber-500 mr-1"></i> ${incidentDate}</div>
+          <div class="mt-1" title="Claim Filed"><i class="fas fa-calendar-alt text-gray-400 mr-1"></i> ${claimDate}</div>
         </div>
       </td>
       <td class="px-6 py-4">
@@ -264,7 +267,7 @@ function renderClaims(claims) {
       </td>
       <td class="px-6 py-4">
         <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${statusClass} capitalize">
-          ${claim.claim_status || 'pending'}
+          ${claim.claim_status || 'Inactive'}
         </span>
       </td>
       <td class="px-6 py-4 text-sm">
@@ -296,8 +299,18 @@ function renderClaims(claims) {
 // Update statistics
 function updateStats(claims) {
   const total = claims.length;
-  const approved = claims.filter(c => c.claim_status === 'approved').length;
-  const pending = claims.filter(c => c.claim_status === 'pending' || !c.claim_status).length;
+  // Count active and completed as approved
+  const approved = claims.filter(c => 
+    c.claim_status?.toLowerCase() === 'approved' || 
+    c.claim_status?.toLowerCase() === 'active' ||
+    c.claim_status?.toLowerCase() === 'completed'
+  ).length;
+  // Count inactive and pending
+  const pending = claims.filter(c => 
+    c.claim_status?.toLowerCase() === 'pending' || 
+    c.claim_status?.toLowerCase() === 'inactive' ||
+    !c.claim_status
+  ).length;
   const totalValue = claims.reduce((sum, c) => sum + (parseFloat(c.total_claim_value) || 0), 0);
   
   document.getElementById('total-claims').textContent = total;

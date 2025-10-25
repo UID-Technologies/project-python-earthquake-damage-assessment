@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse Images - Damage Assessment{% endblock %}
+
+{% block extra_head %}
+<style>
+  .upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+  }
+  
+  .upload-area:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  
+  .upload-area.dragover {
+    border-color: #2563eb;
+    background: #dbeafe;
+  }
+  
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    background: white;
+  }
+  
+  .preview-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+  
+  .remove-btn:hover {
+    background: rgba(220, 38, 38, 1);
+  }
+  
+  .result-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.813rem;
+    font-weight: 600;
+  }
+  
+  .status-crack {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .status-no-crack {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .images-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .image-container {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .metric-item {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .metric-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 0.25rem;
+  }
+  
+  .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, #3b82f6, #2563eb);
+    transition: width 0.3s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">
+      <i class="fas fa-image mr-3 text-primary-600"></i>
+      Analyse Images
+    </h1>
+    <p class="mt-2 text-sm text-gray-600">
+      Upload multiple images to get instant AI-powered crack detection and damage assessment reports
+    </p>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="upload-area" id="uploadArea">
+      <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">
+        Drop images here or click to browse
+      </h3>
+      <p class="text-sm text-gray-500 mb-4">
+        Support for JPG, PNG, JPEG files (Max 10 images at once)
+      </p>
+      <input 
+        type="file" 
+        id="fileInput" 
+        multiple 
+        accept="image/*" 
+        class="hidden"
+      />
+      <button 
+        type="button" 
+        onclick="document.getElementById('fileInput').click()" 
+        class="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+      >
+        <i class="fas fa-folder-open mr-2"></i>
+        Select Images
+      </button>
+    </div>
+
+    <!-- Image Previews -->
+    <div id="previewContainer" class="preview-grid" style="display: none;"></div>
+
+    <!-- Action Buttons -->
+    <div id="actionButtons" class="flex gap-3 mt-6" style="display: none;">
+      <button 
+        type="button" 
+        id="analyzeBtn"
+        class="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+      >
+        <i class="fas fa-brain mr-2"></i>
+        Analyze All Images
+      </button>
+      <button 
+        type="button" 
+        id="clearBtn"
+        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+      >
+        <i class="fas fa-times mr-2"></i>
+        Clear All
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progressContainer" style="display: none;">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-gray-700">Processing images...</span>
+        <span id="progressText" class="text-sm font-medium text-primary-600">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" style="display: none;">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-900">
+        <i class="fas fa-clipboard-check mr-2 text-primary-600"></i>
+        Analysis Results
+      </h2>
+      <button 
+        id="exportBtn"
+        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+      >
+        <i class="fas fa-file-download mr-2"></i>
+        Export Report
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-blue-100 rounded-lg">
+            <i class="fas fa-images text-2xl text-blue-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Total Images</p>
+            <p id="totalImages" class="text-2xl font-bold text-gray-900">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-red-100 rounded-lg">
+            <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Cracks Detected</p>
+            <p id="cracksDetected" class="text-2xl font-bold text-red-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-green-100 rounded-lg">
+            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">No Cracks</p>
+            <p id="noCracks" class="text-2xl font-bold text-green-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-purple-100 rounded-lg">
+            <i class="fas fa-percentage text-2xl text-purple-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Avg Confidence</p>
+            <p id="avgConfidence" class="text-2xl font-bold text-purple-600">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual Results -->
+    <div id="resultsContainer"></div>
+  </div>
+</div>
+
+<script>
+  let selectedFiles = [];
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const actionButtons = document.getElementById('actionButtons');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsContainer = document.getElementById('resultsContainer');
+
+  // Drag and drop events
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+  });
+
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    handleFiles(files);
+  });
+
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+  });
+
+  function handleFiles(files) {
+    if (files.length === 0) return;
+    
+    // Limit to 10 images
+    if (selectedFiles.length + files.length > 10) {
+      alert('Maximum 10 images allowed at once');
+      return;
+    }
+
+    files.forEach(file => {
+      selectedFiles.push(file);
+      addPreview(file);
+    });
+
+    previewContainer.style.display = 'grid';
+    actionButtons.style.display = 'flex';
+    resultsSection.style.display = 'none';
+  }
+
+  function addPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="${file.name}">
+        <button class="remove-btn" onclick="removeFile('${file.name}')">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="p-2 bg-gray-50 text-xs text-gray-600 truncate">
+          ${file.name}
+        </div>
+      `;
+      previewContainer.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeFile(filename) {
+    selectedFiles = selectedFiles.filter(f => f.name !== filename);
+    updatePreviews();
+    
+    if (selectedFiles.length === 0) {
+      previewContainer.style.display = 'none';
+      actionButtons.style.display = 'none';
+    }
+  }
+
+  function updatePreviews() {
+    previewContainer.innerHTML = '';
+    selectedFiles.forEach(file => addPreview(file));
+  }
+
+  clearBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    previewContainer.innerHTML = '';
+    previewContainer.style.display = 'none';
+    actionButtons.style.display = 'none';
+    resultsSection.style.display = 'none';
+    fileInput.value = '';
+  });
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (selectedFiles.length === 0) return;
+
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Analyzing...';
+    progressContainer.style.display = 'block';
+    resultsSection.style.display = 'none';
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+      formData.append('images', file);
+    });
+
+    try {
+      const response = await fetch('/api/detection/batch-analyze', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        displayResults(data);
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error occurred'));
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to analyze images. Please try again.');
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = '<i class="fas fa-brain mr-2"></i> Analyze All Images';
+      progressContainer.style.display = 'none';
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
+    }
+  });
+
+  function displayResults(data) {
+    resultsSection.style.display = 'block';
+    resultsContainer.innerHTML = '';
+
+    // Update summary
+    const cracksCount = data.results.filter(r => r.crack_detected).length;
+    const noCracksCount = data.results.filter(r => !r.crack_detected).length;
+    const avgConf = (data.results.reduce((sum, r) => sum + r.confidence, 0) / data.results.length).toFixed(1);
+
+    document.getElementById('totalImages').textContent = data.total_images;
+    document.getElementById('cracksDetected').textContent = cracksCount;
+    document.getElementById('noCracks').textContent = noCracksCount;
+    document.getElementById('avgConfidence').textContent = avgConf + '%';
+
+    // Display individual results
+    data.results.forEach((result, idx) => {
+      const resultCard = createResultCard(result, idx + 1);
+      resultsContainer.appendChild(resultCard);
+    });
+
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function createResultCard(result, index) {
+    const div = document.createElement('div');
+    div.className = 'result-card animate-slide-in';
+    
+    const statusClass = result.crack_detected ? 'status-crack' : 'status-no-crack';
+    const statusIcon = result.crack_detected ? 'fa-exclamation-triangle' : 'fa-check-circle';
+    
+    div.innerHTML = `
+      <div class="result-header">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Image ${index}: ${result.filename}</h3>
+          <p class="text-sm text-gray-500 mt-1">AI Analysis Complete</p>
+        </div>
+        <span class="status-badge ${statusClass}">
+          <i class="fas ${statusIcon} mr-1"></i>
+          ${result.predicted_class}
+        </span>
+      </div>
+
+      <div class="images-row">
+        <div class="image-container">
+          <img src="${result.original_image_url}" alt="Original">
+          <div class="p-2 bg-gray-50 text-center text-sm font-medium text-gray-700">
+            Original Image
+          </div>
+        </div>
+        ${result.processed_image_url ? `
+          <div class="image-container">
+            <img src="${result.processed_image_url}" alt="Processed">
+            <div class="p-2 bg-gray-50 text-center text-sm font-medium text-gray-700">
+              Crack Detection Analysis
+            </div>
+          </div>
+        ` : `
+          <div class="image-container flex items-center justify-center bg-gray-100" style="min-height: 200px;">
+            <p class="text-gray-500 text-sm">No crack visualization available</p>
+          </div>
+        `}
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-label">Confidence</div>
+          <div class="metric-value">${result.confidence}%</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Length</div>
+          <div class="metric-value">${result.crack_data.length_ft.toFixed(2)} ft</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Width</div>
+          <div class="metric-value">${result.crack_data.width_ft.toFixed(2)} ft</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Area</div>
+          <div class="metric-value">${result.crack_data.area_sqft.toFixed(2)} sq.ft</div>
+        </div>
+      </div>
+
+      <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-medium text-gray-700">Crack Probability:</span>
+          <span class="text-sm font-bold text-red-600">${result.probabilities['Positive (Crack Detected)']}%</span>
+        </div>
+        <div class="flex justify-between items-center mt-2">
+          <span class="text-sm font-medium text-gray-700">No Crack Probability:</span>
+          <span class="text-sm font-bold text-green-600">${result.probabilities['Negative (No Crack)']}%</span>
+        </div>
+      </div>
+    `;
+    
+    return div;
+  }
+
+  // Export functionality
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    alert('Export functionality will be implemented based on your requirements (PDF, CSV, etc.)');
+  });
+
+  // Simulate progress (you can make this more sophisticated)
+  function updateProgress(percent) {
+    progressFill.style.width = percent + '%';
+    progressText.textContent = percent + '%';
+  }
+</script>
+{% endblock %}
+

@@ -76,6 +76,27 @@
           </a>
         </div>
 
+        <!-- Tools Section -->
+        <div class="mb-4">
+          <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tools</p>
+          
+          <!-- Analyse Image -->
+          <a href="{{ url_for('insurance_pages.analyse_image') }}" 
+             class="group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out {% if request.path.startswith('/analyse_image') %}text-blue-600 bg-blue-50 border-r-3 border-blue-600{% else %}text-gray-700 hover:text-gray-900 hover:bg-gray-50{% endif %}">
+            <div class="w-8 h-8 flex items-center justify-center mr-3 transition-colors duration-150">
+              {% if request.path.startswith('/analyse_image') %}
+                <i class="fas fa-image text-blue-600"></i>
+              {% else %}
+                <i class="fas fa-image text-gray-400 group-hover:text-blue-600"></i>
+              {% endif %}
+            </div>
+            <span class="flex-1">Analyse Image</span>
+            {% if request.path.startswith('/analyse_image') %}
+              <span class="w-1.5 h-1.5 bg-blue-600"></span>
+            {% endif %}
+          </a>
+        </div>
+
         <!-- Reports Section -->
         <div class="mb-4">
           <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Analytics</p>

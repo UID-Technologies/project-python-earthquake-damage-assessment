@@ -129,3 +129,93 @@ def detect_crack_with_visualization():
         print(f"Error in crack detection with visualization: {traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@detection_api_bp.route("/batch-analyze", methods=["POST"])
+def batch_analyze_images():
+    """
+    Analyze multiple images in batch and return instant reports
+    Accepts multiple images and returns analysis for each
+    """
+    if 'images' not in request.files:
+        return jsonify({"success": False, "error": "No images provided"}), 400
+    
+    images = request.files.getlist('images')
+    
+    if not images or len(images) == 0:
+        return jsonify({"success": False, "error": "No images selected"}), 400
+    
+    results = []
+    upload_folder = os.path.join('app', 'static', 'upload_image')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    import time
+    
+    for idx, image_file in enumerate(images):
+        if image_file.filename == '':
+            continue
+            
+        try:
+            # Save the uploaded image temporarily
+            filename = secure_filename(image_file.filename)
+            base_name = f"batch_{int(time.time())}_{idx}_{filename}"
+            filepath = os.path.join(upload_folder, base_name)
+            image_file.save(filepath)
+            
+            # Run AI detection
+            img = Image.open(filepath).convert("RGB")
+            img_tensor = inference_transforms(img).to(device)
+            
+            with torch.no_grad():
+                output = model(img_tensor.unsqueeze(0))
+            
+            probabilities = torch.softmax(output, dim=1).squeeze().tolist()
+            max_prob_idx = int(torch.argmax(output, dim=1).item())
+            
+            # Generate crack visualization using OpenCV
+            crack_data = None
+            processed_image_url = None
+            try:
+                crack_data = calculate_crack_area(filepath)
+                if crack_data and crack_data.get('status') == 'success' and crack_data.get('plot_path'):
+                    processed_image_url = f"/static/upload_image/{os.path.basename(crack_data['plot_path'])}"
+            except Exception as crack_error:
+                print(f"Warning: Crack area calculation failed for image {idx}: {crack_error}")
+                crack_data = None
+            
+            # Build result for this image
+            result = {
+                "success": True,
+                "filename": filename,
+                "predicted_class": CLASS_LABELS[max_prob_idx], 
+                "confidence": round(probabilities[max_prob_idx] * 100, 2),
+                "probabilities": {
+                    CLASS_LABELS[i]: round(p * 100, 2) 
+                    for i, p in enumerate(probabilities)
+                },
+                "crack_detected": max_prob_idx == 1,
+                "processed_image_url": processed_image_url,
+                "crack_data": {
+                    "length_ft": crack_data.get('length_ft', 0) if crack_data and crack_data.get('status') == 'success' else 0,
+                    "width_ft": crack_data.get('width_ft', 0) if crack_data and crack_data.get('status') == 'success' else 0,
+                    "area_sqft": crack_data.get('crack_area', 0) if crack_data and crack_data.get('status') == 'success' else 0
+                },
+                "original_image_url": f"/static/upload_image/{base_name}"
+            }
+            
+            results.append(result)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error processing image {idx}: {traceback.format_exc()}")
+            results.append({
+                "success": False,
+                "filename": image_file.filename,
+                "error": str(e)
+            })
+    
+    return jsonify({
+        "success": True,
+        "total_images": len(images),
+        "processed_images": len(results),
+        "results": results
+    }), 200

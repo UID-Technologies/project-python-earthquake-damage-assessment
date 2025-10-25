@@ -142,8 +142,35 @@ def verify_token():
 @jwt_required()
 def get_current_user():
     """
-    Get current user information
+    Get current user information including name, email, and username
     """
-    user_id = get_jwt_identity()
-    return jsonify({"success": True, "user_id": user_id}), 200
+    from app.db import get_db
+    
+    username = get_jwt_identity()
+    conn = get_db()
+    
+    try:
+        with conn.cursor() as cursor:
+            sql = "SELECT id, username, name, email, mobile, address FROM users WHERE username = %s"
+            cursor.execute(sql, (username,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({"success": False, "message": "User not found"}), 404
+            
+            return jsonify({
+                "success": True,
+                "user": {
+                    "id": user['id'],
+                    "username": user['username'],
+                    "name": user.get('name', username),  # Fallback to username if name is empty
+                    "email": user.get('email', ''),
+                    "mobile": user.get('mobile', ''),
+                    "address": user.get('address', '')
+                }
+            }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        conn.close()
 

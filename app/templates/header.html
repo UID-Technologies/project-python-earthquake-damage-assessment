@@ -25,10 +25,17 @@
           </button>
           
           <!-- User Menu -->
-          <div class="relative">
+          <div class="relative flex items-center space-x-3">
+            <!-- User Name -->
+            <div class="hidden md:block text-right">
+              <p class="text-sm font-semibold text-gray-900" id="user-display-name">Loading...</p>
+              <p class="text-xs text-gray-500" id="user-display-email"></p>
+            </div>
+            
+            <!-- User Avatar -->
             <button type="button" class="flex items-center text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button">
               <span class="sr-only">Open user menu</span>
-              <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-base" id="user-avatar-initials">
                 <i class="fas fa-user"></i>
               </div>
             </button>
@@ -38,3 +45,75 @@
     </div>
   </div>
 </nav>
+
+<!-- User Info Script -->
+<script>
+  // Fetch and display logged-in user information
+  async function loadUserInfo() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/auth/user', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          const user = data.user;
+          
+          // Update user name
+          const nameElement = document.getElementById('user-display-name');
+          if (nameElement) {
+            nameElement.textContent = user.name || user.username;
+          }
+          
+          // Update user email
+          const emailElement = document.getElementById('user-display-email');
+          if (emailElement && user.email) {
+            emailElement.textContent = user.email;
+          }
+          
+          // Update avatar with initials
+          const avatarElement = document.getElementById('user-avatar-initials');
+          if (avatarElement) {
+            const displayName = user.name || user.username;
+            const initials = getInitials(displayName);
+            avatarElement.innerHTML = initials;
+          }
+        }
+      } else {
+        console.error('Failed to load user info');
+      }
+    } catch (error) {
+      console.error('Error loading user info:', error);
+    }
+  }
+  
+  // Get initials from name
+  function getInitials(name) {
+    if (!name) return 'U';
+    
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    } else {
+      return name.substring(0, 2).toUpperCase();
+    }
+  }
+  
+  // Load user info when page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadUserInfo);
+  } else {
+    loadUserInfo();
+  }
+</script>

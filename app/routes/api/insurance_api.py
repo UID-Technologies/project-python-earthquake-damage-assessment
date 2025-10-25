@@ -113,16 +113,21 @@ def get_all_user_claims():
                     c.claims_code,
                     c.policy_number,
                     c.insurance_id,
-                    c.time_of_loss,
-                    c.claim_details,
+                    c.time_of_loss as incident_date,
+                    c.claim_details as description,
                     c.situation_of_loss,
                     c.cause_of_loss,
-                    c.status,
-                    c.created_at,
+                    c.status as claim_status,
+                    c.created_at as claim_date,
                     i.insured,
                     i.insurance_type,
                     i.insurance_code,
-                    cv.claim_recommended
+                    COALESCE(cv.claim_recommended, 0) as total_claim_value,
+                    CASE 
+                        WHEN cv.claim_recommended > 0 THEN 'yes'
+                        WHEN cv.claim_recommended = 0 THEN 'no'
+                        ELSE NULL
+                    END as claim_recommended
                 FROM claims c
                 LEFT JOIN insurance i ON c.insurance_id = i.insurance_code
                 LEFT JOIN claims_value cv ON c.claims_code = cv.claims_code
@@ -138,6 +143,8 @@ def get_all_user_claims():
             "claims": claims
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         conn.close()
@@ -207,6 +214,279 @@ def get_assessment_data():
             "data": assessment_data if assessment_data else {}
         })
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@insurance_api_bp.route("/claims/submit-final", methods=["POST"])
+@jwt_required()
+def submit_final_claim():
+    """Submit final claim with property details, images, and analysis results"""
+    from werkzeug.utils import secure_filename
+    import os
+    import time
+    
+    conn = get_db()
+    user_identity = get_jwt_identity()
+    
+    try:
+        # Get form data
+        data = request.form
+        claims_code = data.get('claims_code')
+        property_type = data.get('property_type')
+        wall_type = data.get('wall_type')
+        damage_area = float(data.get('damage_area', 0))
+        damage_length = float(data.get('damage_length', 0))
+        damage_breadth = float(data.get('damage_breadth', 0))
+        damage_height = float(data.get('damage_height', 1))
+        rate_per_sqft = float(data.get('rate_per_sqft', 350))
+        
+        # Get images
+        images = request.files.getlist('images')
+        
+        if not claims_code:
+            return jsonify({"success": False, "error": "Claims code is required"}), 400
+        
+        with conn.cursor() as cursor:
+            # Get claims_id
+            cursor.execute("SELECT id, user_id FROM claims WHERE claims_code = %s", (claims_code,))
+            claim_row = cursor.fetchone()
+            
+            if not claim_row:
+                return jsonify({"success": False, "error": "Claim not found"}), 404
+            
+            claims_id = claim_row['id']
+            claim_user_id = claim_row['user_id']
+            
+            # Verify ownership
+            cursor.execute("SELECT id FROM users WHERE username = %s", (user_identity,))
+            user_row = cursor.fetchone()
+            if not user_row or user_row['id'] != claim_user_id:
+                return jsonify({"success": False, "error": "Unauthorized"}), 403
+            
+            # Insert into claim_property_details
+            sql_property = """
+                INSERT INTO claim_property_details
+                (claims_id, property_type, wall_type, damage_area, damage_length, 
+                 damage_breadth, damage_height, rate_per_sqft, is_active, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 'active')
+            """
+            cursor.execute(sql_property, (
+                claims_id, property_type, wall_type, damage_area,
+                damage_length, damage_breadth, damage_height, rate_per_sqft
+            ))
+            claim_property_details_id = cursor.lastrowid
+            
+            # Process images
+            upload_folder = current_app.config.get('UPLOAD_FOLDER', 'app/static/upload_image')
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            total_crack_area = 0
+            analysis_count = 0
+            total_confidence = 0
+            
+            for image_file in images:
+                if image_file and image_file.filename:
+                    # Save image
+                    filename = secure_filename(image_file.filename)
+                    timestamp = int(time.time())
+                    unique_filename = f"{timestamp}_{filename}"
+                    filepath = os.path.join(upload_folder, unique_filename)
+                    image_file.save(filepath)
+                    
+                    # Run AI analysis
+                    try:
+                        from app.routes.earthquake_detection import e_detect_earthquake
+                        from app.routes.image_area_calculater import calculate_crack_area
+                        
+                        # AI Detection
+                        with open(filepath, 'rb') as img_file:
+                            response, status_code = e_detect_earthquake(img_file)
+                            detection_data = response.json
+                            confidence = detection_data.get("confidence", 0)
+                            crack_percent = detection_data.get("probabilities", {}).get("Positive (Crack Detected)", 0)
+                            non_crack_percent = detection_data.get("probabilities", {}).get("Negative (No Crack)", 0)
+                            ai_decision = detection_data.get("predicted_class", "Unknown")
+                        
+                        # Crack area calculation
+                        image_response = calculate_crack_area(filepath)
+                        crack_area = image_response.get('crack_area', 0)
+                        crack_length = image_response.get('length_ft', 0)
+                        crack_width = image_response.get('width_ft', 0)
+                        
+                        total_crack_area += crack_area
+                        total_confidence += confidence
+                        analysis_count += 1
+                        
+                        # Save image record
+                        sql_image = """
+                            INSERT INTO claim_property_image
+                            (claim_property_details_id, file_name, file_format, file_desc)
+                            VALUES (%s, %s, %s, %s)
+                        """
+                        file_ext = os.path.splitext(filename)[1]
+                        cursor.execute(sql_image, (
+                            claim_property_details_id, unique_filename, file_ext, f"Uploaded: {filename}"
+                        ))
+                        
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing image {filename}: {e}")
+                        # Continue with other images
+                        continue
+            
+            # Save assessment (average of all images)
+            if analysis_count > 0:
+                avg_confidence = total_confidence / analysis_count
+                sql_assessment = """
+                    INSERT INTO claim_property_assessment
+                    (claims_id, confidence, crack_percent, non_crack_percent, ai_decision)
+                    VALUES (%s, %s, %s, %s, %s)
+                """
+                cursor.execute(sql_assessment, (
+                    claims_id, avg_confidence, crack_percent, non_crack_percent, ai_decision
+                ))
+            
+            # Calculate claim value
+            claim_recommended = damage_area * rate_per_sqft
+            
+            # Save to claims_value
+            sql_value = """
+                INSERT INTO claims_value
+                (claims_id, claims_code, claim_recommended)
+                VALUES (%s, %s, %s)
+            """
+            cursor.execute(sql_value, (claims_id, claims_code, claim_recommended))
+            
+            # Update claim status to active
+            cursor.execute(
+                "UPDATE claims SET status = 'active' WHERE id = %s",
+                (claims_id,)
+            )
+            
+            conn.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Claim submitted successfully",
+            "claims_id": claims_id,
+            "claims_code": claims_code,
+            "claim_property_details_id": claim_property_details_id,
+            "total_claim_value": claim_recommended,
+            "images_processed": len(images)
+        }), 201
+        
+    except Exception as e:
+        conn.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@insurance_api_bp.route("/claims/save-manual-override", methods=["POST"])
+@jwt_required()
+def save_manual_override():
+    """Save manual override for AI analysis results"""
+    conn = get_db()
+    user_identity = get_jwt_identity()
+    
+    try:
+        data = request.get_json()
+        
+        # Extract data
+        claims_code = data.get('claims_code')
+        image_index = data.get('image_index')
+        image_filename = data.get('image_filename')
+        ai_decision = data.get('ai_decision')
+        confidence = float(data.get('confidence', 0))
+        length_ft = float(data.get('length_ft', 0))
+        width_ft = float(data.get('width_ft', 0))
+        area_sqft = float(data.get('area_sqft', 0))
+        claim_recommended = float(data.get('claim_recommended', 0))
+        crack_detected = data.get('crack_detected', False)
+        
+        if not claims_code:
+            return jsonify({"success": False, "error": "Claims code is required"}), 400
+        
+        with conn.cursor() as cursor:
+            # Verify claim exists and user owns it
+            cursor.execute(
+                """
+                SELECT c.id, c.user_id 
+                FROM claims c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.claims_code = %s AND u.username = %s
+                """,
+                (claims_code, user_identity)
+            )
+            claim_row = cursor.fetchone()
+            
+            if not claim_row:
+                return jsonify({"success": False, "error": "Claim not found or unauthorized"}), 404
+            
+            claims_id = claim_row['id']
+            
+            # Check if claim_property_image_override table exists, if not create it
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS claim_property_image_override (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    claims_id INT NOT NULL,
+                    image_index INT NOT NULL,
+                    image_filename VARCHAR(255),
+                    ai_decision VARCHAR(100),
+                    confidence DECIMAL(10, 2),
+                    length_ft DECIMAL(10, 2),
+                    width_ft DECIMAL(10, 2),
+                    area_sqft DECIMAL(10, 2),
+                    claim_recommended DECIMAL(15, 2),
+                    crack_detected BOOLEAN,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_claim_image (claims_id, image_index),
+                    FOREIGN KEY (claims_id) REFERENCES claims(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            """)
+            
+            # Insert or update override data
+            sql = """
+                INSERT INTO claim_property_image_override 
+                (claims_id, image_index, image_filename, ai_decision, confidence, 
+                 length_ft, width_ft, area_sqft, claim_recommended, crack_detected)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    image_filename = VALUES(image_filename),
+                    ai_decision = VALUES(ai_decision),
+                    confidence = VALUES(confidence),
+                    length_ft = VALUES(length_ft),
+                    width_ft = VALUES(width_ft),
+                    area_sqft = VALUES(area_sqft),
+                    claim_recommended = VALUES(claim_recommended),
+                    crack_detected = VALUES(crack_detected),
+                    updated_at = CURRENT_TIMESTAMP
+            """
+            
+            cursor.execute(sql, (
+                claims_id, image_index, image_filename, ai_decision, confidence,
+                length_ft, width_ft, area_sqft, claim_recommended, crack_detected
+            ))
+            
+            conn.commit()
+            
+            override_id = cursor.lastrowid if cursor.lastrowid else None
+            
+        return jsonify({
+            "success": True,
+            "message": "Manual override saved successfully",
+            "override_id": override_id,
+            "claims_id": claims_id
+        }), 200
+        
+    except Exception as e:
+        conn.rollback()
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         conn.close()
