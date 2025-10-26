@@ -116,4 +116,27 @@
   } else {
     loadUserInfo();
   }
+  
+  // Sidebar toggle functionality for mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.querySelector('[data-drawer-toggle="sidebar"]');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+      });
+      
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(event) {
+        const isMobile = window.innerWidth < 640;
+        if (isMobile && 
+            !sidebar.contains(event.target) && 
+            !sidebarToggle.contains(event.target) &&
+            !sidebar.classList.contains('-translate-x-full')) {
+          sidebar.classList.add('-translate-x-full');
+        }
+      });
+    }
+  });
 </script>

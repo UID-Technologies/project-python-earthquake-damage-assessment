@@ -120,6 +120,47 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+    
+    /* Responsive Layout Fixes for Laptop Screens */
+    @media (max-width: 1440px) {
+      /* Ensure content doesn't overflow on medium laptop screens */
+      main {
+        max-width: 100%;
+      }
+    }
+    
+    @media (max-width: 1280px) {
+      /* Adjust padding for smaller laptop screens */
+      main {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      /* Reduce grid gaps for tablet/small laptop screens */
+      .grid {
+        gap: 1rem;
+      }
+    }
+    
+    /* Ensure tables are horizontally scrollable on smaller screens */
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent content from being cut off */
+    body, html {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Make sure main content area respects viewport */
+    main {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
   </style>
   
   <script src="{{ url_for('static', filename='js/logout.js') }}"></script>
@@ -135,9 +176,9 @@
       {% include 'sidebar.html' %}
       
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto focus:outline-none">
+      <main class="flex-1 overflow-y-auto focus:outline-none sm:ml-64">
         <div class="py-6">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
             {% block content %}
             <!-- Page specific content injected here -->
             {% endblock %}
