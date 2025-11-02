@@ -17,33 +17,6 @@ This application combines AI-powered crack detection with insurance claim manage
 ---
 
 
-##  Technology Stack
-
-### Backend
-- **Framework**: Flask 3.1.3
-- **Database**: MySQL 8.0 (AWS RDS)
-- **Authentication**: Flask-JWT-Extended, Flask-Bcrypt
-- **WSGI Server**: Gunicorn
-
-### AI & Machine Learning
-- **Deep Learning**: PyTorch
-- **Model**: MobileNetV3 Large (lightweight, efficient)
-- **Image Processing**: OpenCV (cv2), Pillow
-- **Model Library**: timm (PyTorch Image Models)
-
-### Frontend
-- **Templates**: Jinja2
-- **JavaScript**: Vanilla JS with Fetch API
-- **CSS**: Custom responsive design
-- **Icons**: Font Awesome
-
-### Development Tools
-- **Environment**: Python 3.11+
-- **Virtual Environment**: venv
-- **Package Manager**: pip
-- **Environment Variables**: python-dotenv
-
----
 
 ##  Architecture
 
