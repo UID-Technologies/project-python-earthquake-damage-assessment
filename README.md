@@ -2,7 +2,7 @@
 
 A Flask-based web application that uses AI to assess earthquake damage from building images, process insurance claims, and generate comprehensive damage reports.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -20,7 +20,7 @@ A Flask-based web application that uses AI to assess earthquake damage from buil
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 This application combines AI-powered crack detection with insurance claim management to streamline the earthquake damage assessment process. Users can upload images of damaged properties, receive AI-based damage assessments, calculate repair costs, and generate insurance claim reports.
 
@@ -33,29 +33,29 @@ This application combines AI-powered crack detection with insurance claim manage
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🔐 Authentication & Authorization
+###  Authentication & Authorization
 - User registration with admin approval workflow
 - JWT token-based authentication
 - Password hashing with Bcrypt
 - Token blocklist for logout management
 - Protected routes with role-based access
 
-### 🏠 Insurance Management
+###  Insurance Management
 - Create and manage insurance policies
 - Submit insurance claims with detailed information
 - Track claim status and history
 - Policy number and code management
 
-### 🖼️ Damage Assessment
+###  Damage Assessment
 - Upload property damage images
 - AI-powered crack detection with confidence scores
 - Automatic crack measurement (length, width, area)
 - Visual comparison with detected crack overlay
 - Multiple image support per claim
 
-### 📊 Reporting & Analytics
+###  Reporting & Analytics
 - User dashboard with statistics
 - Damage calculation based on area and rates
 - AI recommendation vs user inference comparison
@@ -92,7 +92,7 @@ This application combines AI-powered crack detection with insurance claim manage
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ### Application Structure
 
@@ -151,7 +151,7 @@ Database Storage → Report Display
 
 ---
 
-## 📁 Folder Structure
+##  Folder Structure
 
 ```
 earthquake-damage-assessment-tool-web/
@@ -232,7 +232,7 @@ earthquake-damage-assessment-tool-web/
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - Python 3.11+
@@ -296,62 +296,7 @@ earthquake-damage-assessment-tool-web/
 
 ---
 
-## 🐳 Docker Deployment
-
-### Quick Start with Docker
-
-#### Option 1: Using Docker Compose (Recommended)
-
-1. **Build and run with Docker Compose**:
-   ```bash
-   docker-compose up -d
-   ```
-
-2. **Access the application**:
-   Open browser and navigate to: `http://localhost:5000`
-
-#### Option 2: Build and Push to Docker Hub
-
-**For Windows:**
-```bash
-.\build-and-push.bat latest
-```
-
-**For Linux/Mac:**
-```bash
-chmod +x build-and-push.sh
-./build-and-push.sh latest
-```
-
-#### Option 3: Pull from Docker Hub
-
-```bash
-docker pull varungupta2809/earthquake-damage-assessment:latest
-
-docker run -d \
-  --name earthquake-app \
-  -p 5000:5000 \
-  -e SECRET_KEY=your-secret-key \
-  -e DB_HOST=your-db-host \
-  -e DB_USER=root \
-  -e DB_PASSWORD=your-password \
-  -e DB_NAME=earthquake_db \
-  varungupta2809/earthquake-damage-assessment:latest
-```
-
-### Docker Image Features
-
-- ✅ **Lightweight**: ~1.5-2GB (PyTorch CPU-only)
-- ✅ **Security**: Runs as non-root user
-- ✅ **Production Ready**: Uses Gunicorn with 4 workers
-- ✅ **Health Checks**: Built-in health monitoring
-- ✅ **Optimized**: Multi-layer caching for faster builds
-
-📖 **Detailed Docker Guide**: See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for complete instructions.
-
----
-
-## ⚙️ Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -392,7 +337,7 @@ CONFIG = {
 
 ---
 
-## 📡 API Documentation
+##  API Documentation
 
 ### Base URL
 ```
@@ -600,7 +545,7 @@ Response:
 
 ---
 
-## 🗄️ Database Schema
+##  Database Schema
 
 ### Tables Overview
 
@@ -829,263 +774,3 @@ Verifies:
 - [ ] Images load correctly
 
 ---
-
-## 🔒 Security
-
-### Implemented Security Measures
-
-#### Authentication & Authorization
-- ✅ JWT token-based authentication
-- ✅ Password hashing with Bcrypt
-- ✅ Token blocklist for revoked tokens
-- ✅ Token expiration (60 minutes)
-- ✅ Protected routes with `@jwt_required()`
-
-#### Data Protection
-- ✅ Environment variables for sensitive data
-- ✅ `.env` file excluded from git
-- ✅ SQL injection protection (parameterized queries)
-- ✅ CORS considerations
-
-#### User Management
-- ✅ Admin approval workflow
-- ✅ Account status management (active/inactive)
-- ✅ Role-based access control
-
-### Security Recommendations
-
-#### Critical (Implement Immediately)
-1. **Change Default Secret Key**
-   - Current: `supersecretkey123`
-   - Action: Generate strong random key
-
-2. **Enable HTTPS**
-   - Use SSL/TLS in production
-   - Force HTTPS redirects
-
-3. **Implement Rate Limiting**
-   ```bash
-   pip install Flask-Limiter
-   ```
-
-4. **Add Input Validation**
-   - Validate file uploads (type, size)
-   - Sanitize user inputs
-   - Implement file size limits
-
-#### Important
-1. **Enable Database SSL**
-   - AWS RDS supports SSL
-   - Update connection to use SSL
-
-2. **Add CORS Protection**
-   ```bash
-   pip install flask-cors
-   ```
-
-3. **Implement CSP Headers**
-   - Prevent XSS attacks
-   - Content Security Policy
-
-4. **Add Request Logging**
-   - Monitor suspicious activity
-   - Log authentication attempts
-
-#### Recommended
-1. **Two-Factor Authentication**
-2. **Password Strength Requirements**
-3. **Session Management**
-4. **API Rate Limiting per User**
-5. **Automated Security Scanning**
-
----
-
-## 🚢 Deployment
-
-### Production Deployment with Gunicorn
-
-1. **Install Gunicorn** (already in requirements.txt)
-   ```bash
-   pip install gunicorn
-   ```
-
-2. **Run with Gunicorn**
-   ```bash
-   gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
-   ```
-
-3. **With Environment Variables**
-   ```bash
-   gunicorn -w 4 -b 0.0.0.0:5000 --env-file .env wsgi:app
-   ```
-
-### Docker Deployment
-
-**Dockerfile** (create this):
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 5000
-
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "wsgi:app"]
-```
-
-**Build and Run**:
-```bash
-docker build -t earthquake-assessment .
-docker run -p 5000:5000 --env-file .env earthquake-assessment
-```
-
-### AWS Deployment Options
-
-#### Option 1: AWS EC2
-1. Launch EC2 instance (Ubuntu/Amazon Linux)
-2. Install Python and dependencies
-3. Configure security groups (port 5000)
-4. Use systemd for process management
-5. Setup Nginx as reverse proxy
-
-#### Option 2: AWS Elastic Beanstalk
-1. Create Elastic Beanstalk application
-2. Configure environment variables
-3. Deploy using EB CLI or web console
-4. Auto-scaling enabled
-
-#### Option 3: AWS ECS (Docker)
-1. Push Docker image to ECR
-2. Create ECS cluster
-3. Define task definition
-4. Deploy service with load balancer
-
-### Environment-Specific Configuration
-
-**Development**:
-```python
-DEBUG = True
-```
-
-**Production**:
-```python
-DEBUG = False
-TESTING = False
-```
-
----
-
-## 📊 Performance Considerations
-
-### Database Optimization
-- Implement connection pooling
-- Add database indexes
-- Cache frequently accessed data
-- Consider SQLAlchemy ORM
-
-### AI Model Optimization
-- Model is loaded once at startup
-- Uses CPU or GPU (if available)
-- Inference on single images < 1 second
-- Consider model quantization for faster inference
-
-### Image Processing
-- Optimize image resize operations
-- Implement async processing for large files
-- Consider image compression
-
-### API Performance
-- Implement request caching
-- Use CDN for static assets
-- Enable gzip compression
-- Monitor slow queries
-
----
-
-## 🤝 Contributing
-
-### Development Setup
-1. Fork the repository
-2. Create feature branch
-3. Make changes
-4. Test thoroughly
-5. Submit pull request
-
-### Code Style
-- Follow PEP 8 for Python
-- Use meaningful variable names
-- Add docstrings to functions
-- Comment complex logic
-
-### Commit Messages
-```
-feat: Add new feature
-fix: Fix bug
-docs: Update documentation
-style: Format code
-refactor: Refactor code
-test: Add tests
-```
-
----
-
-## 📝 License
-
-[Add your license information here]
-
----
-
-## 👥 Authors
-
-[Add author information here]
-
----
-
-## 📞 Support
-
-For issues and questions:
-- GitHub Issues: [Repository Issues URL]
-- Email: [Support Email]
-- Documentation: This README
-
----
-
-## 🗺️ Roadmap
-
-### Version 1.1 (Planned)
-- [ ] API versioning (/api/v1/)
-- [ ] Swagger/OpenAPI documentation
-- [ ] Rate limiting implementation
-- [ ] Enhanced error handling
-
-### Version 1.2 (Planned)
-- [ ] Multi-language support
-- [ ] Email notifications
-- [ ] PDF report generation
-- [ ] Advanced analytics dashboard
-
-### Version 2.0 (Future)
-- [ ] Mobile app (React Native)
-- [ ] Real-time notifications
-- [ ] Video damage assessment
-- [ ] Advanced AI models
-
----
-
-## 📚 Additional Resources
-
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [PyTorch Documentation](https://pytorch.org/docs/)
-- [OpenCV Documentation](https://docs.opencv.org/)
-- [JWT Best Practices](https://jwt.io/)
-- [AWS RDS Documentation](https://docs.aws.amazon.com/rds/)
-
----
-
-**Last Updated**: October 22, 2025  
-**Version**: 1.0  
-**Status**: Production Ready ✅
