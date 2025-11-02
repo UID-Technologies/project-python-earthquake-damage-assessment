@@ -2,23 +2,6 @@
 
 A Flask-based web application that uses AI to assess earthquake damage from building images, process insurance claims, and generate comprehensive damage reports.
 
-##  Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Architecture](#architecture)
-- [Folder Structure](#folder-structure)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Database Schema](#database-schema)
-- [Usage](#usage)
-- [Testing](#testing)
-- [Security](#security)
-- [Deployment](#deployment)
-
----
 
 ##  Overview
 
@@ -33,38 +16,8 @@ This application combines AI-powered crack detection with insurance claim manage
 
 ---
 
-##  Features
 
-###  Authentication & Authorization
-- User registration with admin approval workflow
-- JWT token-based authentication
-- Password hashing with Bcrypt
-- Token blocklist for logout management
-- Protected routes with role-based access
-
-###  Insurance Management
-- Create and manage insurance policies
-- Submit insurance claims with detailed information
-- Track claim status and history
-- Policy number and code management
-
-###  Damage Assessment
-- Upload property damage images
-- AI-powered crack detection with confidence scores
-- Automatic crack measurement (length, width, area)
-- Visual comparison with detected crack overlay
-- Multiple image support per claim
-
-###  Reporting & Analytics
-- User dashboard with statistics
-- Damage calculation based on area and rates
-- AI recommendation vs user inference comparison
-- Comprehensive claim reports
-- Export-ready data format
-
----
-
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Backend
 - **Framework**: Flask 3.1.3
