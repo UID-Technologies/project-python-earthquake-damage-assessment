@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Analyse Images (OpenAI) - Damage Assessment{% endblock %}
+{% block title %}Analyse Images - Damage Assessment{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -170,18 +170,6 @@
     height: 100%;
     background: linear-gradient(to right, #10b981, #059669);
     transition: width 0.3s ease;
-  }
-  
-  .ai-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.75rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
   }
   
   .description-box {
@@ -499,14 +487,10 @@
   <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-900">
       <i class="fas fa-robot mr-3 text-green-600"></i>
-      Analyse Images (OpenAI)
-      <span class="ai-badge">
-        <i class="fas fa-brain mr-1"></i>
-        GPT-4 Vision
-      </span>
+      Analyse Images
     </h1>
     <p class="mt-2 text-sm text-gray-600">
-      Upload images for AI-powered crack detection and damage assessment using OpenAI's advanced vision model
+      Upload images for AI-powered crack detection and damage assessment
     </p>
   </div>
 
@@ -548,7 +532,7 @@
         class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
       >
         <i class="fas fa-brain mr-2"></i>
-        Analyze All Images (OpenAI)
+        Analyze All Images
       </button>
       <button 
         type="button" 
@@ -563,7 +547,7 @@
     <!-- Progress Bar -->
     <div id="progressContainer" style="display: none;">
       <div class="flex justify-between items-center mb-2">
-        <span class="text-sm font-medium text-gray-700">Processing images with OpenAI...</span>
+        <span class="text-sm font-medium text-gray-700">Processing images...</span>
         <span id="progressText" class="text-sm font-medium text-green-600">0%</span>
       </div>
       <div class="progress-bar">
@@ -577,7 +561,7 @@
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-gray-900">
         <i class="fas fa-clipboard-check mr-2 text-green-600"></i>
-        Analysis Results (OpenAI)
+        Analysis Results
       </h2>
       <button 
         id="exportBtn"
@@ -747,7 +731,7 @@
     if (selectedFiles.length === 0) return;
 
     analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Analyzing with OpenAI...';
+    analyzeBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Analyzing...';
     progressContainer.style.display = 'block';
     resultsSection.style.display = 'none';
 
@@ -787,7 +771,7 @@
         
         // Check for specific error types and show helpful messages
         if (errorMsg.includes('API key') || errorMsg.includes('invalid_api_key') || errorMsg.includes('401') || errorMsg.includes('Incorrect API key')) {
-          alert('OpenAI API Key Error:\n\n' + errorMsg + '\n\nPlease:\n1. Check your API key at https://platform.openai.com/account/api-keys\n2. Update OPENAI_API_KEY in your .env file\n3. Restart the application');
+          alert('API Key Error:\n\n' + errorMsg + '\n\nPlease:\n1. Check your API key configuration\n2. Update OPENAI_API_KEY in your .env file\n3. Restart the application');
         } else if (errorMsg.includes('rate_limit') || errorMsg.includes('429')) {
           alert('Rate Limit Error:\n\n' + errorMsg + '\n\nPlease try again in a few minutes.');
         } else if (errorMsg.includes('model') || errorMsg.includes('404') || errorMsg.includes('deprecated')) {
@@ -813,7 +797,7 @@
       } else if (error.message.includes('API key') || error.message.includes('401')) {
         errorMessage += 'API Key Error:\n\n';
         errorMessage += error.message + '\n\n';
-        errorMessage += 'Please check if OpenAI API key is configured in .env file and restart the application.';
+            errorMessage += 'Please check if API key is configured in .env file and restart the application.';
       } else {
         errorMessage += 'Error Details:\n' + error.message;
         errorMessage += '\n\nCheck browser console (F12) for full error details.';
@@ -822,7 +806,7 @@
       alert(errorMessage);
     } finally {
       analyzeBtn.disabled = false;
-      analyzeBtn.innerHTML = '<i class="fas fa-brain mr-2"></i> Analyze All Images (OpenAI)';
+      analyzeBtn.innerHTML = '<i class="fas fa-brain mr-2"></i> Analyze All Images';
       progressContainer.style.display = 'none';
       progressFill.style.width = '0%';
       progressText.textContent = '0%';
@@ -975,7 +959,7 @@
           </h3>
           <p class="text-sm text-gray-500 mt-1">
             <i class="fas fa-robot mr-1 text-purple-600"></i>
-            ${result.analysis_model || 'OpenAI GPT-4o'} Analysis Complete
+            AI Analysis Complete
           </p>
         </div>
         <span class="status-badge ${statusClass}">
