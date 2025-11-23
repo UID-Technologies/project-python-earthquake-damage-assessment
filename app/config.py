@@ -16,3 +16,7 @@ class Config:
     # Absolute folder path for image uploads inside your app
     APP_ROOT = os.path.abspath(os.path.dirname(__file__))  # Absolute path of app folder
     UPLOAD_FOLDER = os.path.join(APP_ROOT, 'static/upload_image')
+    
+    # OpenAI API Configuration
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")  # Updated: gpt-4-vision-preview is deprecated. Use gpt-4o or gpt-4-turbo

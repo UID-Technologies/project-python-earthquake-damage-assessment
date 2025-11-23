@@ -1,0 +1,1014 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse Images (OpenAI) - Damage Assessment{% endblock %}
+
+{% block extra_head %}
+<style>
+  .upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+  }
+  
+  .upload-area:hover {
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+  
+  .upload-area.dragover {
+    border-color: #059669;
+    background: #d1fae5;
+  }
+  
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    background: white;
+  }
+  
+  .preview-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+  
+  .remove-btn:hover {
+    background: rgba(220, 38, 38, 1);
+  }
+  
+  .result-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.813rem;
+    font-weight: 600;
+  }
+  
+  .status-crack {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .status-no-crack {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .image-container {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    margin: 1rem 0;
+  }
+  
+  .image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .metric-item {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .metric-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 0.25rem;
+  }
+  
+  .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(16, 185, 129, 0.3);
+    border-radius: 50%;
+    border-top-color: #10b981;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, #10b981, #059669);
+    transition: width 0.3s ease;
+  }
+  
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+  
+  .description-box {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border-left: 4px solid #10b981;
+  }
+  
+  .recommendations-box {
+    background: #fef3c7;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border-left: 4px solid #f59e0b;
+  }
+  
+  .analysis-detail-section {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .analysis-detail-section h4 {
+    color: #1e293b;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .analysis-detail-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .analysis-detail-section li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #475569;
+    line-height: 1.6;
+  }
+  
+  .analysis-detail-section li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  
+  .criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  
+  .criteria-item {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid #10b981;
+    font-size: 0.875rem;
+  }
+  
+  .criteria-item.negative {
+    border-left-color: #94a3b8;
+    opacity: 0.7;
+  }
+  
+  .expandable-section {
+    margin-top: 1rem;
+  }
+  
+  .expand-toggle {
+    background: #f1f5f9;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+    font-weight: 500;
+    color: #475569;
+  }
+  
+  .expand-toggle:hover {
+    background: #e2e8f0;
+  }
+  
+  .expand-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  
+  .expand-content.expanded {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+  }
+  
+  .expert-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+  
+  .confidence-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  
+  .confidence-fill {
+    height: 100%;
+    background: linear-gradient(to right, #10b981, #059669);
+    transition: width 0.3s ease;
+    border-radius: 9999px;
+  }
+  
+  .confidence-fill.warning {
+    background: linear-gradient(to right, #f59e0b, #d97706);
+  }
+  
+  .confidence-fill.danger {
+    background: linear-gradient(to right, #ef4444, #dc2626);
+  }
+  
+  .conclusion-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .conclusion-box h4 {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .conclusion-box p {
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.7;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+  
+  .conclusion-box .conclusion-text {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid rgba(255, 255, 255, 0.5);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">
+      <i class="fas fa-robot mr-3 text-green-600"></i>
+      Analyse Images (OpenAI)
+      <span class="ai-badge">
+        <i class="fas fa-brain mr-1"></i>
+        GPT-4 Vision
+      </span>
+    </h1>
+    <p class="mt-2 text-sm text-gray-600">
+      Upload images for AI-powered crack detection and damage assessment using OpenAI's advanced vision model
+    </p>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="upload-area" id="uploadArea">
+      <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">
+        Drop images here or click to browse
+      </h3>
+      <p class="text-sm text-gray-500 mb-4">
+        Support for JPG, PNG, JPEG files (Max 10 images at once)
+      </p>
+      <input 
+        type="file" 
+        id="fileInput" 
+        multiple 
+        accept="image/*" 
+        class="hidden"
+      />
+      <button 
+        type="button" 
+        onclick="document.getElementById('fileInput').click()" 
+        class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+      >
+        <i class="fas fa-folder-open mr-2"></i>
+        Select Images
+      </button>
+    </div>
+
+    <!-- Image Previews -->
+    <div id="previewContainer" class="preview-grid" style="display: none;"></div>
+
+    <!-- Action Buttons -->
+    <div id="actionButtons" class="flex gap-3 mt-6" style="display: none;">
+      <button 
+        type="button" 
+        id="analyzeBtn"
+        class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+      >
+        <i class="fas fa-brain mr-2"></i>
+        Analyze All Images (OpenAI)
+      </button>
+      <button 
+        type="button" 
+        id="clearBtn"
+        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+      >
+        <i class="fas fa-times mr-2"></i>
+        Clear All
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progressContainer" style="display: none;">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-gray-700">Processing images with OpenAI...</span>
+        <span id="progressText" class="text-sm font-medium text-green-600">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" style="display: none;">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-900">
+        <i class="fas fa-clipboard-check mr-2 text-green-600"></i>
+        Analysis Results (OpenAI)
+      </h2>
+      <button 
+        id="exportBtn"
+        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+      >
+        <i class="fas fa-file-download mr-2"></i>
+        Export Report
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-blue-100 rounded-lg">
+            <i class="fas fa-images text-2xl text-blue-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Total Images</p>
+            <p id="totalImages" class="text-2xl font-bold text-gray-900">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-red-100 rounded-lg">
+            <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Cracks Detected</p>
+            <p id="cracksDetected" class="text-2xl font-bold text-red-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-green-100 rounded-lg">
+            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">No Cracks</p>
+            <p id="noCracks" class="text-2xl font-bold text-green-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <div class="p-3 bg-purple-100 rounded-lg">
+            <i class="fas fa-percentage text-2xl text-purple-600"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-600">Avg Confidence</p>
+            <p id="avgConfidence" class="text-2xl font-bold text-purple-600">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual Results -->
+    <div id="resultsContainer"></div>
+  </div>
+</div>
+
+<script>
+  let selectedFiles = [];
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const actionButtons = document.getElementById('actionButtons');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsContainer = document.getElementById('resultsContainer');
+
+  // Drag and drop events
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+  });
+
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    handleFiles(files);
+  });
+
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+  });
+
+  function handleFiles(files) {
+    if (files.length === 0) return;
+    
+    // Limit to 10 images
+    if (selectedFiles.length + files.length > 10) {
+      alert('Maximum 10 images allowed at once');
+      return;
+    }
+
+    files.forEach(file => {
+      selectedFiles.push(file);
+      addPreview(file);
+    });
+
+    previewContainer.style.display = 'grid';
+    actionButtons.style.display = 'flex';
+    resultsSection.style.display = 'none';
+  }
+
+  function addPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="${file.name}">
+        <button class="remove-btn" onclick="removeFile('${file.name}')">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="p-2 bg-gray-50 text-xs text-gray-600 truncate">
+          ${file.name}
+        </div>
+      `;
+      previewContainer.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeFile(filename) {
+    selectedFiles = selectedFiles.filter(f => f.name !== filename);
+    updatePreviews();
+    
+    if (selectedFiles.length === 0) {
+      previewContainer.style.display = 'none';
+      actionButtons.style.display = 'none';
+    }
+  }
+
+  function updatePreviews() {
+    previewContainer.innerHTML = '';
+    selectedFiles.forEach(file => addPreview(file));
+  }
+
+  clearBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    previewContainer.innerHTML = '';
+    previewContainer.style.display = 'none';
+    actionButtons.style.display = 'none';
+    resultsSection.style.display = 'none';
+    fileInput.value = '';
+  });
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (selectedFiles.length === 0) return;
+
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Analyzing with OpenAI...';
+    progressContainer.style.display = 'block';
+    resultsSection.style.display = 'none';
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+      formData.append('images', file);
+    });
+
+    try {
+      const response = await fetch('/api/detection/batch-analyze-openai', {
+        method: 'POST',
+        body: formData
+      });
+
+      // Check HTTP status first
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        throw new Error(errorData.error || `Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data); // Debug log
+
+      if (data.success) {
+        displayResults(data);
+      } else {
+        // Show detailed error message
+        const errorMsg = data.error || 'Unknown error occurred';
+        console.error('API Error Response:', errorMsg);
+        console.error('Full Error Data:', data);
+        
+        // Check for specific error types and show helpful messages
+        if (errorMsg.includes('API key') || errorMsg.includes('invalid_api_key') || errorMsg.includes('401') || errorMsg.includes('Incorrect API key')) {
+          alert('OpenAI API Key Error:\n\n' + errorMsg + '\n\nPlease:\n1. Check your API key at https://platform.openai.com/account/api-keys\n2. Update OPENAI_API_KEY in your .env file\n3. Restart the application');
+        } else if (errorMsg.includes('rate_limit') || errorMsg.includes('429')) {
+          alert('Rate Limit Error:\n\n' + errorMsg + '\n\nPlease try again in a few minutes.');
+        } else if (errorMsg.includes('model') || errorMsg.includes('404') || errorMsg.includes('deprecated')) {
+          alert('Model Error:\n\n' + errorMsg + '\n\nThe model may have been updated. Please check your OPENAI_MODEL setting in .env file.');
+        } else {
+          alert('Analysis Error:\n\n' + errorMsg + '\n\nPlease check the browser console (F12) for more details.');
+        }
+      }
+    } catch (error) {
+      console.error('Request Error:', error);
+      console.error('Error Stack:', error.stack);
+      
+      // More detailed error message based on error type
+      let errorMessage = 'Failed to analyze images.\n\n';
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
+        errorMessage += 'Network Error: Could not connect to the server.\n\n';
+        errorMessage += 'Please check:\n';
+        errorMessage += '1. Flask application is running (python app.py)\n';
+        errorMessage += '2. Server is accessible at http://localhost:5000\n';
+        errorMessage += '3. No firewall blocking the connection\n';
+        errorMessage += '4. Check browser console (F12) for details';
+      } else if (error.message.includes('API key') || error.message.includes('401')) {
+        errorMessage += 'API Key Error:\n\n';
+        errorMessage += error.message + '\n\n';
+        errorMessage += 'Please check if OpenAI API key is configured in .env file and restart the application.';
+      } else {
+        errorMessage += 'Error Details:\n' + error.message;
+        errorMessage += '\n\nCheck browser console (F12) for full error details.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = '<i class="fas fa-brain mr-2"></i> Analyze All Images (OpenAI)';
+      progressContainer.style.display = 'none';
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
+    }
+  });
+
+  function displayResults(data) {
+    resultsSection.style.display = 'block';
+    resultsContainer.innerHTML = '';
+
+    // Update summary
+    const cracksCount = data.results.filter(r => r.success && r.crack_detected).length;
+    const noCracksCount = data.results.filter(r => r.success && !r.crack_detected).length;
+    const successfulResults = data.results.filter(r => r.success);
+    const avgConf = successfulResults.length > 0 
+      ? (successfulResults.reduce((sum, r) => sum + r.confidence, 0) / successfulResults.length).toFixed(1)
+      : 0;
+
+    document.getElementById('totalImages').textContent = data.total_images;
+    document.getElementById('cracksDetected').textContent = cracksCount;
+    document.getElementById('noCracks').textContent = noCracksCount;
+    document.getElementById('avgConfidence').textContent = avgConf + '%';
+
+    // Display individual results
+    data.results.forEach((result, idx) => {
+      if (result.success) {
+        const resultCard = createResultCard(result, idx + 1);
+        resultsContainer.appendChild(resultCard);
+      } else {
+        const errorCard = createErrorCard(result, idx + 1);
+        resultsContainer.appendChild(errorCard);
+      }
+    });
+
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Helper function to format description text (preserve bullet points and structure)
+  function formatDescription(text) {
+    if (!text) return '';
+    
+    // Convert to string if it's not already
+    if (typeof text !== 'string') {
+      if (typeof text === 'object') {
+        // If it's an object, try to stringify it or get a property
+        text = JSON.stringify(text);
+      } else {
+        text = String(text);
+      }
+    }
+    
+    // Replace markdown-style bullets with HTML
+    text = text.replace(/^\s*[-*•]\s+/gm, '<li>');
+    text = text.replace(/^\s*\d+\.\s+/gm, '<li>');
+    
+    // Split by lines and process
+    const lines = text.split('\n').filter(line => line.trim());
+    let html = '';
+    let inList = false;
+    
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      
+      // Check if it's a bullet point
+      if (trimmed.match(/^[-*•]\s+/) || trimmed.match(/^\d+\.\s+/)) {
+        if (!inList) {
+          html += '<ul>';
+          inList = true;
+        }
+        const content = trimmed.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '');
+        html += `<li>${escapeHtml(content)}</li>`;
+      } else if (trimmed.startsWith('*') || trimmed.startsWith('-')) {
+        if (!inList) {
+          html += '<ul>';
+          inList = true;
+        }
+        const content = trimmed.substring(1).trim();
+        html += `<li>${escapeHtml(content)}</li>`;
+      } else {
+        if (inList) {
+          html += '</ul>';
+          inList = false;
+        }
+        if (trimmed) {
+          html += `<p>${escapeHtml(trimmed)}</p>`;
+        }
+      }
+    });
+    
+    if (inList) {
+      html += '</ul>';
+    }
+    
+    return html || `<p>${escapeHtml(text)}</p>`;
+  }
+  
+  // Helper to escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  // Helper to format recommendations
+  function formatRecommendations(text) {
+    if (!text) return '';
+    
+    // Convert to string if it's not already
+    if (typeof text !== 'string') {
+      if (typeof text === 'object') {
+        text = JSON.stringify(text);
+      } else {
+        text = String(text);
+      }
+    }
+    
+    return formatDescription(text);
+  }
+  
+  // Get confidence bar class
+  function getConfidenceClass(confidence) {
+    if (confidence >= 80) return 'danger';
+    if (confidence >= 60) return 'warning';
+    return '';
+  }
+
+  function createResultCard(result, index) {
+    const div = document.createElement('div');
+    div.className = 'result-card animate-slide-in';
+    
+    const statusClass = result.crack_detected ? 'status-crack' : 'status-no-crack';
+    const statusIcon = result.crack_detected ? 'fa-exclamation-triangle' : 'fa-check-circle';
+    const confidenceBarClass = getConfidenceClass(result.confidence);
+    const uniqueId = `result-${index}-${Date.now()}`;
+    
+    div.innerHTML = `
+      <div class="result-header">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">
+            Image ${index}: ${result.filename}
+            <span class="expert-badge">
+              <i class="fas fa-user-tie mr-1"></i>
+              Expert Assessment
+            </span>
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            <i class="fas fa-robot mr-1 text-purple-600"></i>
+            ${result.analysis_model || 'OpenAI GPT-4o'} Analysis Complete
+          </p>
+        </div>
+        <span class="status-badge ${statusClass}">
+          <i class="fas ${statusIcon} mr-1"></i>
+          ${result.predicted_class}
+        </span>
+      </div>
+
+      <div class="image-container">
+        <img src="${result.original_image_url}" alt="Original">
+        <div class="p-2 bg-gray-50 text-center text-sm font-medium text-gray-700">
+          Original Image
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-label">Confidence Level</div>
+          <div class="metric-value">${result.confidence}%</div>
+          <div class="confidence-bar">
+            <div class="confidence-fill ${confidenceBarClass}" style="width: ${result.confidence}%"></div>
+          </div>
+          ${result.confidence >= 80 ? '<p class="text-xs text-gray-500 mt-1">✓ Meets 80% threshold</p>' : '<p class="text-xs text-yellow-600 mt-1">⚠ Below 80% threshold</p>'}
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Crack Probability</div>
+          <div class="metric-value">${result.probabilities['Positive (Crack Detected)']}%</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">No Crack Probability</div>
+          <div class="metric-value">${result.probabilities['Negative (No Crack)']}%</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Assessment Status</div>
+          <div class="metric-value" style="font-size: 1rem;">
+            ${result.crack_detected ? '<span class="text-red-600 font-bold">Crack Detected</span>' : '<span class="text-green-600 font-bold">No Crack</span>'}
+          </div>
+        </div>
+      </div>
+
+      ${result.description ? `
+        <div class="analysis-detail-section">
+          <h4>
+            <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
+            Expert Analysis Details
+          </h4>
+          <div class="expandable-section">
+            <div class="expand-toggle" onclick="toggleExpand('${uniqueId}-desc')">
+              <span>
+                <i class="fas fa-eye mr-2"></i>
+                View Detailed Assessment
+              </span>
+              <i class="fas fa-chevron-down" id="${uniqueId}-desc-icon"></i>
+            </div>
+            <div class="expand-content" id="${uniqueId}-desc">
+              <div style="padding: 1rem 0;">
+                ${formatDescription(result.description || '')}
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${result.conclusion ? `
+        <div class="conclusion-box">
+          <h4>
+            <i class="fas fa-gavel mr-2"></i>
+            Expert Conclusion
+          </h4>
+          <div class="conclusion-text">
+            <p>${escapeHtml(String(result.conclusion || ''))}</p>
+          </div>
+        </div>
+      ` : ''}
+
+      ${result.recommendations ? `
+        <div class="recommendations-box">
+          <h4 class="font-semibold text-gray-900 mb-2">
+            <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>
+            Professional Recommendations
+          </h4>
+          <div class="expandable-section">
+            <div class="expand-toggle" onclick="toggleExpand('${uniqueId}-rec')">
+              <span>
+                <i class="fas fa-list-check mr-2"></i>
+                View Recommendations
+              </span>
+              <i class="fas fa-chevron-down" id="${uniqueId}-rec-icon"></i>
+            </div>
+            <div class="expand-content" id="${uniqueId}-rec">
+              <div style="padding: 1rem 0;">
+                ${formatRecommendations(result.recommendations || '')}
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-start">
+          <i class="fas fa-info-circle text-blue-600 mt-1 mr-2"></i>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-blue-900 mb-1">Assessment Criteria Applied</p>
+            <p class="text-xs text-blue-700">
+              This analysis was performed using expert insurance appraiser criteria including: 
+              pattern analysis, width/depth assessment, progression indicators, and associated structural signs.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    return div;
+  }
+  
+  // Toggle expand/collapse function
+  function toggleExpand(id) {
+    const content = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    
+    if (content.classList.contains('expanded')) {
+      content.classList.remove('expanded');
+      if (icon) icon.classList.remove('fa-chevron-up');
+      if (icon) icon.classList.add('fa-chevron-down');
+    } else {
+      content.classList.add('expanded');
+      if (icon) icon.classList.remove('fa-chevron-down');
+      if (icon) icon.classList.add('fa-chevron-up');
+    }
+  }
+  
+  // Make toggleExpand available globally
+  window.toggleExpand = toggleExpand;
+
+  function createErrorCard(result, index) {
+    const div = document.createElement('div');
+    div.className = 'result-card animate-slide-in';
+    div.style.borderLeft = '4px solid #ef4444';
+    
+    div.innerHTML = `
+      <div class="result-header">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Image ${index}: ${result.filename}</h3>
+          <p class="text-sm text-red-600 mt-1">Analysis Failed</p>
+        </div>
+        <span class="status-badge" style="background: #fee2e2; color: #991b1b;">
+          <i class="fas fa-exclamation-circle mr-1"></i>
+          Error
+        </span>
+      </div>
+      <div class="p-4 bg-red-50 rounded-lg">
+        <p class="text-sm text-red-800">${result.error || 'Unknown error occurred'}</p>
+      </div>
+    `;
+    
+    return div;
+  }
+
+  // Export functionality
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    alert('Export functionality will be implemented based on your requirements (PDF, CSV, etc.)');
+  });
+
+  // Simulate progress
+  function updateProgress(percent) {
+    progressFill.style.width = percent + '%';
+    progressText.textContent = percent + '%';
+  }
+</script>
+{% endblock %}
+

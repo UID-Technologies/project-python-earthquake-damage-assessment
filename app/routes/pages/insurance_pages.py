@@ -480,3 +480,9 @@ def insurance_report():
 def analyse_image():
     """Render image analysis page for batch processing"""
     return render_template("analyse_image.html")
+
+
+@insurance_pages_bp.route('/analyse_image_new', methods=['GET'])
+def analyse_image_new():
+    """Render new image analysis page using OpenAI API"""
+    return render_template("analyse_image_new.html")
