@@ -305,9 +305,9 @@ Identify the main objects, understand the pattern and refer to the major assessm
 9. Achieve 80% confidence Level - Be confident in your assessment before marking as Positive
 10. Provide the output in a structured bulleted list format
 
-Based on your expert analysis, provide:
-- Detection result: "Positive (Crack Detected)" or "Negative (No Crack)"
-- Confidence level: A percentage (0-100) - must be at least 80% for Positive detection
+    Based on your expert analysis, provide:
+    - Detection result: "Positive (Crack Detected)" or "Negative (No Seismic Crack)"
+    - Confidence level: A percentage (0-100) - must be at least 80% for Positive detection
 - Detailed description: Structured bulleted list describing:
   * What you observe in the image
   * Which assessment criteria are met or not met
@@ -322,9 +322,9 @@ Based on your expert analysis, provide:
   * Structural assessment needs
   * Insurance claim considerations
 
-Format your response as JSON with these keys:
-- "detection": "Positive (Crack Detected)" or "Negative (No Crack)"
-- "confidence": number between 0-100 (must be >= 80 for Positive)
+    Format your response as JSON with these keys:
+    - "detection": "Positive (Crack Detected)" or "Negative (No Seismic Crack)"
+    - "confidence": number between 0-100 (must be >= 80 for Positive)
 - "description": detailed structured description with bullet points
 - "recommendations": professional recommendations text
 - "conclusion": A concise summary conclusion (2-3 sentences) that summarizes your expert assessment, the key findings, and the overall determination
@@ -399,8 +399,8 @@ Respond ONLY with valid JSON, no additional text."""
         if "positive" in detection_text or "crack detected" in detection_text:
             predicted_class = "Positive (Crack Detected)"
             crack_detected = True
-        elif "negative" in detection_text or "no crack" in detection_text:
-            predicted_class = "Negative (No Crack)"
+        elif "negative" in detection_text or "no crack" in detection_text or "no seismic" in detection_text:
+            predicted_class = "Negative (No Seismic Crack)"
             crack_detected = False
         else:
             predicted_class = "Unknown"
@@ -422,7 +422,7 @@ Respond ONLY with valid JSON, no additional text."""
             "confidence": round(confidence, 2),
             "probabilities": {
                 "Positive (Crack Detected)": round(crack_prob, 2),
-                "Negative (No Crack)": round(no_crack_prob, 2)
+                "Negative (No Seismic Crack)": round(no_crack_prob, 2)
             },
             "crack_detected": crack_detected,
             "description": analysis_data.get("description", ""),
@@ -537,9 +537,9 @@ Identify the main objects, understand the pattern and refer to the major assessm
 9. Achieve 80% confidence Level - Be confident in your assessment before marking as Positive
 10. Provide the output in a structured bulleted list format
 
-Based on your expert analysis, provide:
-- Detection result: "Positive (Crack Detected)" or "Negative (No Crack)"
-- Confidence level: A percentage (0-100) - must be at least 80% for Positive detection
+    Based on your expert analysis, provide:
+    - Detection result: "Positive (Crack Detected)" or "Negative (No Seismic Crack)"
+    - Confidence level: A percentage (0-100) - must be at least 80% for Positive detection
 - Detailed description: Structured bulleted list describing:
   * What you observe in the image
   * Which assessment criteria are met or not met
@@ -554,9 +554,9 @@ Based on your expert analysis, provide:
   * Structural assessment needs
   * Insurance claim considerations
 
-Format your response as JSON with these keys:
-- "detection": "Positive (Crack Detected)" or "Negative (No Crack)"
-- "confidence": number between 0-100 (must be >= 80 for Positive)
+    Format your response as JSON with these keys:
+    - "detection": "Positive (Crack Detected)" or "Negative (No Seismic Crack)"
+    - "confidence": number between 0-100 (must be >= 80 for Positive)
 - "description": detailed structured description with bullet points
 - "recommendations": professional recommendations text
 - "conclusion": A concise summary conclusion (2-3 sentences) that summarizes your expert assessment, the key findings, and the overall determination
@@ -634,8 +634,8 @@ Respond ONLY with valid JSON, no additional text."""
                 if "positive" in detection_text or "crack detected" in detection_text:
                     predicted_class = "Positive (Crack Detected)"
                     crack_detected = True
-                elif "negative" in detection_text or "no crack" in detection_text:
-                    predicted_class = "Negative (No Crack)"
+                elif "negative" in detection_text or "no crack" in detection_text or "no seismic" in detection_text:
+                    predicted_class = "Negative (No Seismic Crack)"
                     crack_detected = False
                 else:
                     predicted_class = "Unknown"
@@ -659,7 +659,7 @@ Respond ONLY with valid JSON, no additional text."""
                     "confidence": round(confidence, 2),
                     "probabilities": {
                         "Positive (Crack Detected)": round(crack_prob, 2),
-                        "Negative (No Crack)": round(no_crack_prob, 2)
+                        "Negative (No Seismic Crack)": round(no_crack_prob, 2)
                     },
                     "crack_detected": crack_detected,
                     "description": analysis_data.get("description", ""),

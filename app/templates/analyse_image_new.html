@@ -328,6 +328,137 @@
     background: linear-gradient(to right, #ef4444, #dc2626);
   }
   
+  .criteria-assessment-box {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    margin-top: 1rem;
+    overflow: hidden;
+  }
+  
+  .criteria-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  
+  .criteria-header:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  }
+  
+  .criteria-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out;
+    background: white;
+  }
+  
+  .criteria-content.expanded {
+    max-height: 3000px;
+    transition: max-height 0.8s ease-in;
+  }
+  
+  .criteria-list {
+    padding: 1.5rem;
+  }
+  
+  .criterion-item {
+    background: #f8fafc;
+    border-left: 4px solid #667eea;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  
+  .criterion-item:hover {
+    background: #f1f5f9;
+    border-left-color: #764ba2;
+    transform: translateX(4px);
+  }
+  
+  .criterion-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.875rem;
+    margin-right: 0.75rem;
+  }
+  
+  .criterion-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .criterion-description {
+    color: #475569;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin-left: 2.5rem;
+  }
+  
+  .criterion-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+  
+  .criterion-status.positive {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .criterion-status.negative {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .criterion-status.neutral {
+    background: #e2e8f0;
+    color: #475569;
+  }
+  
+  .disclaimer-card {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .disclaimer-card h4 {
+    color: #92400e;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .disclaimer-card p {
+    color: #78350f;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+  
   .conclusion-box {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -489,7 +620,7 @@
             <i class="fas fa-check-circle text-2xl text-green-600"></i>
           </div>
           <div class="ml-4">
-            <p class="text-sm text-gray-600">No Cracks</p>
+            <p class="text-sm text-gray-600">No Seismic Cracks</p>
             <p id="noCracks" class="text-2xl font-bold text-green-600">0</p>
           </div>
         </div>
@@ -726,6 +857,10 @@
       }
     });
 
+    // Add disclaimer card at the end
+    const disclaimerCard = createDisclaimerCard();
+    resultsContainer.appendChild(disclaimerCard);
+
     // Scroll to results
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -870,13 +1005,13 @@
           <div class="metric-value">${result.probabilities['Positive (Crack Detected)']}%</div>
         </div>
         <div class="metric-item">
-          <div class="metric-label">No Crack Probability</div>
-          <div class="metric-value">${result.probabilities['Negative (No Crack)']}%</div>
+          <div class="metric-label">No Seismic Crack Probability</div>
+          <div class="metric-value">${result.probabilities['Negative (No Seismic Crack)'] || result.probabilities['Negative (No Crack)'] || 0}%</div>
         </div>
         <div class="metric-item">
           <div class="metric-label">Assessment Status</div>
           <div class="metric-value" style="font-size: 1rem;">
-            ${result.crack_detected ? '<span class="text-red-600 font-bold">Crack Detected</span>' : '<span class="text-green-600 font-bold">No Crack</span>'}
+            ${result.crack_detected ? '<span class="text-red-600 font-bold">Crack Detected</span>' : '<span class="text-green-600 font-bold">No Seismic Crack</span>'}
           </div>
         </div>
       </div>
@@ -915,6 +1050,27 @@
           </div>
         </div>
       ` : ''}
+
+      <!-- Complete Assessment Against 10 Criteria -->
+      <div class="criteria-assessment-box">
+        <div class="criteria-header" onclick="toggleExpand('${uniqueId}-criteria')">
+          <div>
+            <h4 style="margin: 0; color: white; font-size: 1.1rem; font-weight: 600;">
+              <i class="fas fa-clipboard-check mr-2"></i>
+              Complete Assessment: 10 Expert Criteria Analysis
+            </h4>
+            <p style="margin: 0.25rem 0 0 0; color: rgba(255,255,255,0.9); font-size: 0.85rem;">
+              Click to view detailed assessment against all 10 insurance appraiser criteria
+            </p>
+          </div>
+          <i class="fas fa-chevron-down" id="${uniqueId}-criteria-icon" style="font-size: 1.2rem; transition: transform 0.3s;"></i>
+        </div>
+        <div class="criteria-content" id="${uniqueId}-criteria">
+          <div class="criteria-list">
+            ${generateCriteriaAssessment(result)}
+          </div>
+        </div>
+      </div>
 
       ${result.recommendations ? `
         <div class="recommendations-box">
@@ -956,6 +1112,127 @@
     return div;
   }
   
+  // Generate criteria assessment display
+  function generateCriteriaAssessment(result) {
+    const description = String(result.description || '');
+    const conclusion = String(result.conclusion || '');
+    const recommendations = String(result.recommendations || '');
+    
+    // Combine all text to search for criteria mentions
+    const fullText = (description + ' ' + conclusion + ' ' + recommendations).toLowerCase();
+    
+    // Define the 10 criteria
+    const criteria = [
+      {
+        number: 1,
+        title: 'Emanating from Columns/Beams',
+        keywords: ['column', 'beam', 'structural element', 'pillar', 'support', 'emanating', 'originate', 'from column', 'from beam'],
+        description: 'Check if cracks originate from structural elements like columns or beams'
+      },
+      {
+        number: 2,
+        title: 'Pattern Analysis',
+        keywords: ['diagonal', 'x-shaped', 'stair-step', 'pattern', 'crack pattern', 'zigzag', 'x pattern', 'diagonal crack'],
+        description: 'Usually diagonal / X-shaped / stair-step patterns indicate earthquake damage'
+      },
+      {
+        number: 3,
+        title: 'Width Assessment',
+        keywords: ['width', 'wide', '3mm', 'millimeter', 'wider', 'widening', 'broad', 'width of', 'crack width'],
+        description: 'Wide cracks (> 3mm), often widening, are more serious indicators'
+      },
+      {
+        number: 4,
+        title: 'Depth Analysis',
+        keywords: ['depth', 'deep', 'through wall', 'penetrating', 'structural depth', 'full thickness', 'through'],
+        description: 'Deep, through wall structure cracks indicate severe damage'
+      },
+      {
+        number: 5,
+        title: 'Progression Indicators',
+        keywords: ['progression', 'widening', 'sudden', 'active', 'expanding', 'growing', 'progressive'],
+        description: 'Sudden appearance + keeps widening after quake suggests active structural failure'
+      },
+      {
+        number: 6,
+        title: 'Associated Signs',
+        keywords: ['door', 'jamming', 'sloping', 'floor', 'multiple crack', 'adjacent', 'associated', 'sign', 'indicator'],
+        description: 'Doors jamming, sloping floors, multiple cracks, adjacent beam or pillar damage'
+      },
+      {
+        number: 7,
+        title: 'False Positive vs Positive',
+        keywords: ['false positive', 'settling', 'thermal', 'non-earthquake', 'distinguish', 'verification', 'ruled out'],
+        description: 'Distinguish between earthquake damage vs. other causes (settling, thermal, etc.)'
+      },
+      {
+        number: 8,
+        title: 'Negative Image Identification',
+        keywords: ['negative', 'no crack', 'rejection', 'not detected', 'clear', 'intact', 'no damage', 'no structural'],
+        description: 'Identify negative cases - only mark as Positive if clear earthquake damage indicators are present'
+      },
+      {
+        number: 9,
+        title: 'Confidence Level',
+        keywords: ['confidence', '80%', 'certainty', 'certain', 'confident', 'assessment level', 'percent'],
+        description: `Achieve 80% confidence level - Current: ${result.confidence || 0}%`
+      },
+      {
+        number: 10,
+        title: 'Structured Output',
+        keywords: ['structured', 'bulleted', 'list', 'format', 'organized', 'detailed', 'comprehensive'],
+        description: 'Provide output in structured bulleted list format with comprehensive details'
+      }
+    ];
+    
+    let html = '';
+    
+    criteria.forEach(criterion => {
+      // Check if criterion is mentioned in the text
+      const isMentioned = criterion.keywords.some(keyword => fullText.includes(keyword));
+      const statusClass = isMentioned ? 'positive' : 'neutral';
+      const statusText = isMentioned ? 'Assessed' : 'Not Explicitly Mentioned';
+      
+      // Special handling for confidence (criterion 9)
+      let criterionDesc = criterion.description;
+      if (criterion.number === 9) {
+        const confLevel = result.confidence || 0;
+        const meetsThreshold = confLevel >= 80;
+        criterionDesc = `Confidence Level: ${confLevel}% ${meetsThreshold ? '(Meets 80% threshold ✓)' : '(Below 80% threshold ⚠)'}`;
+      }
+      
+      html += `
+        <div class="criterion-item">
+          <div class="criterion-title">
+            <span class="criterion-number">${criterion.number}</span>
+            ${criterion.title}
+            <span class="criterion-status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="criterion-description">
+            ${escapeHtml(criterionDesc)}
+          </div>
+        </div>
+      `;
+    });
+    
+    // Add full description section
+    if (description) {
+      html += `
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
+          <h5 style="font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+            <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+            Complete Analysis Text
+          </h5>
+          <div style="background: #f8fafc; padding: 1rem; border-radius: 6px; border-left: 4px solid #667eea;">
+            ${formatDescription(description)}
+          </div>
+        </div>
+      `;
+    }
+    
+    return html;
+  }
+  
   // Toggle expand/collapse function
   function toggleExpand(id) {
     const content = document.getElementById(id);
@@ -974,6 +1251,25 @@
   
   // Make toggleExpand available globally
   window.toggleExpand = toggleExpand;
+
+  function createDisclaimerCard() {
+    const div = document.createElement('div');
+    div.className = 'disclaimer-card animate-slide-in';
+    
+    div.innerHTML = `
+      <h4>
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        AI Disclaimer
+      </h4>
+      <p>
+        <strong>Important:</strong> The response is generated by AI engine and it may hallucinate. 
+        The inference might not be always accurate. Please use professional judgment and consult 
+        with qualified structural engineers or insurance appraisers for critical decisions.
+      </p>
+    `;
+    
+    return div;
+  }
 
   function createErrorCard(result, index) {
     const div = document.createElement('div');
