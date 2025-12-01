@@ -582,7 +582,7 @@ Claim amount calculations
 
 ---
 
-## 💻 Usage
+## Usage
 
 ### User Workflow
 
@@ -641,7 +641,7 @@ Claim amount calculations
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Tests
 
