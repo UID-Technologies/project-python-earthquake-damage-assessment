@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Layout Test - Proclaim</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    /* Copy of responsive fixes from base.html */
+    body, html {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    main {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    @media (max-width: 1440px) {
+      main {
+        max-width: 100%;
+      }
+    }
+    
+    @media (max-width: 1280px) {
+      main {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .grid {
+        gap: 1rem;
+      }
+    }
+    
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+    <div class="px-3 py-3 lg:px-5 lg:pl-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center justify-start">
+          <button id="sidebar-toggle" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
+            </svg>
+          </button>
+          <span class="ml-2 text-xl font-bold">Proclaim - Responsive Test</span>
+        </div>
+        <div class="text-sm text-gray-600">
+          <span id="screen-width"></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex h-screen bg-gray-50 pt-16">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-16 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 overflow-y-auto">
+      <div class="h-full flex flex-col">
+        <div class="flex-1 px-3 py-4 overflow-y-auto">
+          <div class="mb-6 p-3 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">Test User</p>
+                <p class="text-xs text-gray-500 truncate">Proclaim</p>
+              </div>
+            </div>
+          </div>
+          
+          <nav class="space-y-1">
+            <a href="#" class="group flex items-center px-3 py-2.5 text-sm font-medium text-blue-600 bg-blue-50 border-r-3 border-blue-600">
+              <div class="w-8 h-8 flex items-center justify-center mr-3">
+                <i class="fas fa-th-large text-blue-600"></i>
+              </div>
+              <span class="flex-1">Dashboard</span>
+            </a>
+            <a href="#" class="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+              <div class="w-8 h-8 flex items-center justify-center mr-3">
+                <i class="fas fa-shield-alt text-gray-400 group-hover:text-blue-600"></i>
+              </div>
+              <span class="flex-1">Insurances</span>
+            </a>
+            <a href="#" class="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+              <div class="w-8 h-8 flex items-center justify-center mr-3">
+                <i class="fas fa-file-medical-alt text-gray-400 group-hover:text-blue-600"></i>
+              </div>
+              <span class="flex-1">Claims</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto focus:outline-none sm:ml-64">
+      <div class="py-6">
+        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <!-- Screen Size Indicator -->
+          <div class="mb-8 p-4 bg-blue-100 border border-blue-300 rounded-lg">
+            <h2 class="text-lg font-bold text-blue-900 mb-2">
+              <i class="fas fa-desktop mr-2"></i>
+              Responsive Layout Test
+            </h2>
+            <div class="space-y-1 text-sm text-blue-800">
+              <p><strong>Current Width:</strong> <span id="current-width" class="font-mono"></span></p>
+              <p><strong>Breakpoint:</strong> <span id="breakpoint" class="font-mono"></span></p>
+              <p><strong>Sidebar State:</strong> <span id="sidebar-state" class="font-mono"></span></p>
+            </div>
+          </div>
+
+          <!-- Test Content -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+            <p class="mt-2 text-sm text-gray-600">Testing responsive layout on different screen sizes</p>
+          </div>
+
+          <!-- Statistics Cards -->
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-shield-alt text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Total Insurance</p>
+                  <p class="text-2xl font-bold text-gray-900">42</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-file-alt text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Total Claims</p>
+                  <p class="text-2xl font-bold text-gray-900">28</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-image text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">AI Tests</p>
+                  <p class="text-2xl font-bold text-gray-900">156</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-hand-holding-usd text-amber-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Total Policies</p>
+                  <p class="text-2xl font-bold text-gray-900">15</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Test -->
+          <div class="bg-white shadow-xl overflow-hidden rounded-lg">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+              <h2 class="text-xl font-bold text-white">
+                <i class="fas fa-table mr-3"></i>
+                Sample Data Table
+              </h2>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Policy Number</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Insured Person</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">1</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">POL-2025-001</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">John Doe</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Earthquake</span></td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Active</span></td>
+                    <td class="px-6 py-4 text-sm"><button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">2</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">POL-2025-002</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">Jane Smith</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">Comprehensive</span></td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Active</span></td>
+                    <td class="px-6 py-4 text-sm"><button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Resize Instructions -->
+          <div class="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h3 class="text-lg font-bold text-yellow-900 mb-3">
+              <i class="fas fa-info-circle mr-2"></i>
+              Testing Instructions
+            </h3>
+            <ul class="space-y-2 text-sm text-yellow-800">
+              <li><i class="fas fa-check mr-2 text-green-600"></i> Resize your browser window to test different screen sizes</li>
+              <li><i class="fas fa-check mr-2 text-green-600"></i> On mobile (< 640px), the hamburger menu should appear</li>
+              <li><i class="fas fa-check mr-2 text-green-600"></i> On desktop (>= 640px), the sidebar should be fixed and visible</li>
+              <li><i class="fas fa-check mr-2 text-green-600"></i> Content should never be cropped on the right side</li>
+              <li><i class="fas fa-check mr-2 text-green-600"></i> Tables should scroll horizontally on narrow screens</li>
+              <li><i class="fas fa-check mr-2 text-green-600"></i> No horizontal scrollbar should appear on the page</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Update screen size info
+    function updateScreenInfo() {
+      const width = window.innerWidth;
+      document.getElementById('current-width').textContent = width + 'px';
+      document.getElementById('screen-width').textContent = width + 'px';
+      
+      let breakpoint = '';
+      if (width < 640) breakpoint = 'Mobile (< 640px)';
+      else if (width < 768) breakpoint = 'Small Tablet (640px - 768px)';
+      else if (width < 1024) breakpoint = 'Tablet (768px - 1024px)';
+      else if (width < 1280) breakpoint = 'Small Laptop (1024px - 1280px)';
+      else if (width < 1440) breakpoint = 'Medium Laptop (1280px - 1440px)';
+      else breakpoint = 'Desktop (>= 1440px)';
+      
+      document.getElementById('breakpoint').textContent = breakpoint;
+      
+      const sidebar = document.getElementById('sidebar');
+      const isHidden = sidebar.classList.contains('-translate-x-full');
+      document.getElementById('sidebar-state').textContent = isHidden ? 'Hidden' : 'Visible';
+    }
+    
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    sidebarToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      sidebar.classList.toggle('-translate-x-full');
+      updateScreenInfo();
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+      const isMobile = window.innerWidth < 640;
+      if (isMobile && 
+          !sidebar.contains(event.target) && 
+          !sidebarToggle.contains(event.target) &&
+          !sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.add('-translate-x-full');
+        updateScreenInfo();
+      }
+    });
+    
+    // Update on resize
+    window.addEventListener('resize', updateScreenInfo);
+    
+    // Initial update
+    updateScreenInfo();
+  </script>
+</body>
+</html>
+
