@@ -427,6 +427,7 @@ Respond ONLY with valid JSON, no additional text."""
             "crack_detected": crack_detected,
             "description": analysis_data.get("description", ""),
             "recommendations": analysis_data.get("recommendations", ""),
+            "conclusion": analysis_data.get("conclusion", ""),
             "original_image_url": f"/static/upload_image/{base_name}",
             "analysis_model": "OpenAI GPT-4 Vision"
         }

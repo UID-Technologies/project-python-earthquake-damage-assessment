@@ -769,7 +769,7 @@
             type="button"
             onclick="nextStep()"
             id="analyze-next-btn"
-            class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 shadow-lg"
           >
             Next: Review & Submit
             <i class="fas fa-arrow-right ml-2 text-xs"></i>
@@ -1362,14 +1362,19 @@ async function nextStep() {
     claimData.damage_height = document.getElementById('damage_height').value;
     claimData.rate_per_sqft = document.getElementById('rate_per_sqft').value;
   } else if (currentStep === 4) {
-    // TEMPORARY: Allow proceeding without analysis for design review
-    // TODO: Uncomment this validation when ready for production
-    // if (!claimData.analysis_completed) {
-    //   alert('Please complete the AI analysis before proceeding.');
-    //   return;
-    // }
+    // Ensure analysis results are stored before proceeding
+    if (imageAnalysisResults && imageAnalysisResults.length > 0) {
+      claimData.analysis_results = imageAnalysisResults;
+      claimData.analysis_completed = true;
+    }
     // Populate review
-    populateReview();
+    try {
+      populateReview();
+    } catch (error) {
+      console.error('Error populating review:', error);
+      showToast('Error preparing review. Please try again.', 'error');
+      return;
+    }
   }
   
   currentStep++;
@@ -1502,7 +1507,8 @@ function populateAIAnalysisReview() {
   
   claimData.analysis_results.forEach((result, index) => {
     const imageFile = claimData.images[index];
-    const imageUrl = result.processed_image_url || '';
+    // Use processed image from internal model if available, otherwise use original
+    const imageUrl = result.processed_image_url || result.original_image_url || '';
     const crackData = result.crack_data || {};
     const confidence = result.confidence || 0;
     const predictedClass = result.predicted_class || 'Unknown';
@@ -1537,15 +1543,60 @@ function populateAIAnalysisReview() {
       
       <!-- Card Content -->
       <div class="p-4">
+        <!-- OpenAI Analysis Content -->
+        ${result.description || result.recommendations || result.conclusion ? `
+        <div class="mb-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded">
+          <h5 class="text-xs font-bold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-robot mr-2 text-blue-600"></i>
+            Expert Analysis (${result.analysis_model || 'OpenAI GPT-4 Vision'})
+          </h5>
+          
+          ${result.description ? `
+          <div class="mb-3">
+            <h6 class="text-xs font-semibold text-gray-800 mb-1 flex items-center">
+              <i class="fas fa-clipboard-list mr-1 text-blue-600"></i>Detailed Assessment
+            </h6>
+            <div class="text-xs text-gray-700 bg-white p-2 rounded border border-blue-200 max-h-32 overflow-y-auto">
+              ${String(result.description || '').replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${result.conclusion ? `
+          <div class="mb-3">
+            <h6 class="text-xs font-semibold text-gray-800 mb-1 flex items-center">
+              <i class="fas fa-gavel mr-1 text-green-600"></i>Conclusion
+            </h6>
+            <div class="text-xs text-gray-700 bg-white p-2 rounded border border-green-200">
+              ${String(result.conclusion || '')}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${result.recommendations ? `
+          <div class="mb-3">
+            <h6 class="text-xs font-semibold text-gray-800 mb-1 flex items-center">
+              <i class="fas fa-lightbulb mr-1 text-yellow-600"></i>Recommendations
+            </h6>
+            <div class="text-xs text-gray-700 bg-white p-2 rounded border border-yellow-200 max-h-32 overflow-y-auto">
+              ${String(result.recommendations || '').replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          ` : ''}
+        </div>
+        ` : ''}
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <!-- Analyzed Image -->
+          <!-- Analyzed Image (Internal Model Visualization if available) -->
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-2">
-              <i class="fas fa-image mr-1"></i> Analyzed Image
+              <i class="fas fa-image mr-1"></i> 
+              ${result.internal_model_used ? 'Crack Detection Visualization' : 'Original Image'}
             </label>
             <div class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-              ${imageUrl ? `<img src="${imageUrl}" class="w-full h-full object-contain" alt="Analyzed">` : '<div class="flex items-center justify-center h-full text-gray-400"><i class="fas fa-image text-3xl"></i></div>'}
+              ${imageUrl ? `<img src="${imageUrl}" class="w-full h-full object-contain" alt="Analyzed">` : result.original_image_url ? `<img src="${result.original_image_url}" class="w-full h-full object-contain" alt="Original">` : '<div class="flex items-center justify-center h-full text-gray-400"><i class="fas fa-image text-3xl"></i></div>'}
             </div>
+            ${result.internal_model_used ? '<p class="text-xs text-purple-600 mt-1"><i class="fas fa-info-circle mr-1"></i>Visualization generated by internal AI model</p>' : ''}
           </div>
           
           <!-- AI Model Results -->
@@ -1562,6 +1613,11 @@ function populateAIAnalysisReview() {
                 <span class="text-xs text-gray-600">Confidence:</span>
                 <span class="text-xs font-semibold text-gray-900">${confidence.toFixed(2)}%</span>
               </div>
+              ${result.internal_model_used ? `
+              <div class="pt-2 border-t border-gray-300">
+                <p class="text-xs font-semibold text-gray-700 mb-1">Crack Measurements (Internal Model):</p>
+              </div>
+              ` : ''}
               <div class="flex justify-between">
                 <span class="text-xs text-gray-600">Length (ft):</span>
                 <span class="text-xs font-semibold text-gray-900">${crackData.length_ft ? crackData.length_ft.toFixed(2) : '0.00'}</span>
@@ -1843,30 +1899,85 @@ async function analyzeSingleImage(index) {
     const formData = new FormData();
     formData.append('image', file);
     
-    // Call the crack detection API with visualization generation
-    const response = await fetch('/api/detection/crack-with-visualization', {
+    // Call the OpenAI Vision API for analysis
+    const response = await fetch('/api/detection/crack-openai', {
       method: 'POST',
       body: formData
     });
     
-    if (!response.ok) {
-      throw new Error('Analysis failed');
-    }
-    
     const result = await response.json();
     
-    // Store the analysis result with processed image URL from backend
+    if (!response.ok || !result.success) {
+      const errorMsg = result.error || result.message || 'Analysis failed';
+      throw new Error(errorMsg);
+    }
+    
+    // Store the analysis result with OpenAI content
+    const isCrackDetected = result.crack_detected || result.predicted_class.includes('Crack Detected') || result.predicted_class.includes('Positive');
+    const isHighConfidence = result.confidence >= 80;
+    
     imageAnalysisResults[index] = {
       file_name: file.name,
       predicted_class: result.predicted_class,
       confidence: result.confidence,
       probabilities: result.probabilities,
       crack_percent: result.probabilities['Positive (Crack Detected)'] || 0,
-      non_crack_percent: result.probabilities['Negative (No Crack)'] || 0,
+      non_crack_percent: result.probabilities['Negative (No Seismic Crack)'] || 0,
       original_file: file,
-      processed_image_url: result.processed_image_url,  // URL to actual visualization generated by OpenCV
-      crack_data: result.crack_data
+      original_image_url: result.original_image_url || '',
+      // OpenAI analysis content
+      description: result.description || '',
+      recommendations: result.recommendations || '',
+      conclusion: result.conclusion || '',
+      analysis_model: result.analysis_model || 'OpenAI GPT-4 Vision',
+      crack_detected: isCrackDetected,
+      // Internal model data (will be populated if positive/high confidence)
+      processed_image_url: null,
+      crack_data: {
+        length_ft: 0,
+        width_ft: 0,
+        area_sqft: 0
+      },
+      internal_model_used: false
     };
+    
+    // If positive or high confidence, call internal model for visualization and area calculation
+    if (isCrackDetected || isHighConfidence) {
+      statusBadge.className = 'inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800';
+      statusBadge.innerHTML = `
+        <i class="fas fa-circle-notch fa-spin text-blue-600 mr-2 text-xs"></i>
+        Generating visualization...
+      `;
+      analyzeBtn.disabled = true;
+      
+      try {
+        // Call internal model for visualization and area calculation
+        const internalFormData = new FormData();
+        internalFormData.append('image', file);
+        
+        const internalResponse = await fetch('/api/detection/crack-with-visualization', {
+          method: 'POST',
+          body: internalFormData
+        });
+        
+        if (internalResponse.ok) {
+          const internalResult = await internalResponse.json();
+          if (internalResult.success) {
+            // Update with internal model results
+            imageAnalysisResults[index].processed_image_url = internalResult.processed_image_url || null;
+            imageAnalysisResults[index].crack_data = {
+              length_ft: internalResult.crack_data?.length_ft || 0,
+              width_ft: internalResult.crack_data?.width_ft || 0,
+              area_sqft: internalResult.crack_data?.area_sqft || 0
+            };
+            imageAnalysisResults[index].internal_model_used = true;
+          }
+        }
+      } catch (internalError) {
+        console.warn('Internal model visualization failed:', internalError);
+        // Continue without internal model data
+      }
+    }
     
     // Update status to done
     imageAnalysisStatus[index] = 'done';
@@ -1877,7 +1988,6 @@ async function analyzeSingleImage(index) {
     `;
     
     // Show result details
-    const isCrackDetected = result.predicted_class.includes('Crack Detected');
     const resultClass = isCrackDetected ? 'text-orange-600' : 'text-green-600';
     resultDiv.className = `text-xs mt-1 ${resultClass} font-semibold`;
     resultDiv.textContent = `${result.predicted_class} (${result.confidence}%)`;
@@ -1908,14 +2018,25 @@ async function analyzeSingleImage(index) {
     `;
     
     resultDiv.className = 'text-xs mt-1 text-red-600';
-    resultDiv.textContent = 'Analysis failed. Please try again.';
+    resultDiv.textContent = `Analysis failed: ${error.message}`;
     resultDiv.classList.remove('hidden');
     
     // Re-enable button
     analyzeBtn.disabled = false;
     analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     
-    alert('Failed to analyze image. Please try again.');
+    // Show detailed error message based on error type
+    let errorMessage = 'Failed to analyze image.\n\n';
+    if (error.message.includes('API key') || error.message.includes('invalid_api_key') || error.message.includes('401')) {
+      errorMessage += 'API Key Error:\n\n' + error.message + '\n\nPlease:\n1. Check your API key configuration\n2. Update OPENAI_API_KEY in your .env file\n3. Restart the application';
+    } else if (error.message.includes('rate_limit') || error.message.includes('429')) {
+      errorMessage += 'Rate Limit Error:\n\n' + error.message + '\n\nPlease try again in a few minutes.';
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMessage += 'Network Error: Could not connect to the server.\n\nPlease check:\n1. Flask application is running\n2. Server is accessible\n3. Check browser console (F12) for details';
+    } else {
+      errorMessage += 'Error Details:\n' + error.message + '\n\nCheck browser console (F12) for full error details.';
+    }
+    alert(errorMessage);
   }
 }
 
@@ -1991,17 +2112,58 @@ function viewAnalyzedImage(index) {
     }
   };
   
-  const isCrackDetected = result.predicted_class.includes('Crack Detected');
+  const isCrackDetected = result.crack_detected || result.predicted_class.includes('Crack Detected') || result.predicted_class.includes('Positive');
   const statusColor = isCrackDetected ? 'orange' : 'green';
   const statusIcon = isCrackDetected ? 'exclamation-triangle' : 'check-circle';
   
-  // Read both original and processed images
+  // Helper functions for formatting (similar to analyse_image_new.html)
+  function formatDescription(text) {
+    if (!text) return '';
+    if (typeof text !== 'string') {
+      text = typeof text === 'object' ? JSON.stringify(text) : String(text);
+    }
+    // Replace markdown-style bullets with HTML
+    text = text.replace(/^\s*[-*•]\s+/gm, '<li>');
+    text = text.replace(/^\s*\d+\.\s+/gm, '<li>');
+    const lines = text.split('\n').filter(line => line.trim());
+    let html = '';
+    let inList = false;
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed.match(/^[-*•]\s+/) || trimmed.match(/^\d+\.\s+/)) {
+        if (!inList) {
+          html += '<ul class="list-disc list-inside space-y-1">';
+          inList = true;
+        }
+        const content = trimmed.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '');
+        html += `<li>${content}</li>`;
+      } else {
+        if (inList) {
+          html += '</ul>';
+          inList = false;
+        }
+        if (trimmed) {
+          html += `<p class="mb-2">${trimmed}</p>`;
+        }
+      }
+    });
+    if (inList) html += '</ul>';
+    return html || `<p>${text}</p>`;
+  }
+  
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  // Read original image
   const reader = new FileReader();
   reader.onload = async (e) => {
     const originalImageSrc = e.target.result;
     
-    // Get the processed image URL from backend (generated by OpenCV model)
-    let processedImageSrc = result.processed_image_url || null;
+    // Use original image URL from OpenAI response if available
+    const displayImageSrc = result.original_image_url ? result.original_image_url : originalImageSrc;
     
     modal.innerHTML = `
       <div class="bg-white max-w-5xl w-full max-h-[90vh] overflow-auto">
@@ -2048,68 +2210,80 @@ function viewAnalyzedImage(index) {
                   <span class="text-sm font-medium text-gray-700">Crack Detected</span>
                   <span class="text-sm font-bold text-orange-600">${result.crack_percent.toFixed(2)}%</span>
                 </div>
-                <div class="w-full bg-gray-200 h-3">
-                  <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 transition-all duration-500" style="width: ${result.crack_percent}%"></div>
+                <div class="w-full bg-gray-200 h-3 rounded">
+                  <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded transition-all duration-500" style="width: ${result.crack_percent}%"></div>
                 </div>
+                ${result.confidence >= 80 ? '<p class="text-xs text-gray-500 mt-1">✓ Meets 80% threshold</p>' : '<p class="text-xs text-yellow-600 mt-1">⚠ Below 80% threshold</p>'}
               </div>
               <div>
                 <div class="flex justify-between items-center mb-1">
-                  <span class="text-sm font-medium text-gray-700">No Crack</span>
+                  <span class="text-sm font-medium text-gray-700">No Seismic Crack</span>
                   <span class="text-sm font-bold text-green-600">${result.non_crack_percent.toFixed(2)}%</span>
                 </div>
-                <div class="w-full bg-gray-200 h-3">
-                  <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-3 transition-all duration-500" style="width: ${result.non_crack_percent}%"></div>
+                <div class="w-full bg-gray-200 h-3 rounded">
+                  <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded transition-all duration-500" style="width: ${result.non_crack_percent}%"></div>
                 </div>
               </div>
             </div>
           </div>
           
-          <!-- Image Comparison Side by Side -->
+          <!-- Original Image -->
           <div class="mb-6">
             <h4 class="font-semibold text-gray-900 mb-3">
-              <i class="fas fa-images mr-2"></i>Image Analysis Comparison
+              <i class="fas fa-image mr-2"></i>Analyzed Image
             </h4>
-            ${processedImageSrc ? `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Original Image -->
-              <div>
-                <h5 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                  <i class="fas fa-image mr-2 text-blue-600"></i>Original Image
-                </h5>
-                <div class="bg-gray-100 p-2 border-2 border-gray-300">
-                  <img src="${originalImageSrc}" class="w-full h-auto" alt="Original">
-                </div>
-              </div>
-              
-              <!-- Processed Image with Crack Detection -->
-              <div>
-                <h5 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                  <i class="fas fa-microscope mr-2 text-purple-600"></i>Crack Detection Visualization
-                </h5>
-                <div class="bg-gray-100 p-2 border-2 border-purple-500">
-                  <img src="${processedImageSrc}" class="w-full h-auto" alt="Processed with crack detection">
-                </div>
-                <p class="text-xs text-green-600 mt-2 flex items-start">
-                  <i class="fas fa-check-circle mr-1 mt-0.5"></i>
-                  <span>Showing actual crack visualization generated by AI model</span>
-                </p>
-              </div>
+            <div class="bg-gray-100 p-2 border-2 border-gray-300 rounded">
+              <img src="${displayImageSrc}" class="w-full h-auto rounded" alt="Original Image">
             </div>
-            ` : `
-            <div>
-              <h5 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                <i class="fas fa-image mr-2 text-blue-600"></i>Original Image
-              </h5>
-              <div class="bg-gray-100 p-2 border-2 border-gray-300">
-                <img src="${originalImageSrc}" class="w-full h-auto" alt="Original">
-              </div>
-              <p class="text-xs text-gray-600 mt-2 flex items-start">
-                <i class="fas fa-info-circle text-blue-500 mr-1 mt-0.5"></i>
-                <span>Detailed crack visualization with contours will be generated during final submission. The visualization image will be saved to the database and viewable in reports.</span>
-              </p>
-            </div>
-            `}
+            <p class="text-xs text-blue-600 mt-2 flex items-start">
+              <i class="fas fa-robot mr-1 mt-0.5"></i>
+              <span>Analyzed using ${result.analysis_model || 'OpenAI GPT-4 Vision'}</span>
+            </p>
           </div>
+          
+          <!-- OpenAI Analysis Content -->
+          ${result.description ? `
+          <div class="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded">
+            <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('fa-chevron-down'); this.querySelector('i').classList.toggle('fa-chevron-up');">
+              <h4 class="font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>Expert Analysis Details
+              </h4>
+              <i class="fas fa-chevron-down text-blue-600"></i>
+            </div>
+            <div class="hidden">
+              <div class="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200">
+                ${formatDescription(result.description)}
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${result.conclusion ? `
+          <div class="mb-6 bg-gradient-to-br from-green-50 to-teal-50 border-l-4 border-green-500 p-4 rounded">
+            <h4 class="font-semibold text-gray-900 mb-2 flex items-center">
+              <i class="fas fa-gavel mr-2 text-green-600"></i>Expert Conclusion
+            </h4>
+            <div class="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+              <p>${escapeHtml(String(result.conclusion || ''))}</p>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${result.recommendations ? `
+          <div class="mb-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-l-4 border-yellow-500 p-4 rounded">
+            <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('fa-chevron-down'); this.querySelector('i').classList.toggle('fa-chevron-up');">
+              <h4 class="font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>Professional Recommendations
+              </h4>
+              <i class="fas fa-chevron-down text-yellow-600"></i>
+            </div>
+            <div class="hidden">
+              <div class="text-sm text-gray-700 bg-white p-3 rounded border border-yellow-200">
+                ${formatDescription(result.recommendations)}
+              </div>
+            </div>
+          </div>
+          ` : ''}
           
           <!-- Action Buttons -->
           <div class="flex justify-end space-x-3">
