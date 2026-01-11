@@ -42,13 +42,35 @@ def create_app():
     # Check if token is revoked
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
-        jti = jwt_payload["jti"]
+        jti = jwt_payload.get("jti")
+        if not jti:
+            return False
         return jti in BLOCKLIST
 
     # Response for revoked tokens
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
-        return jsonify({"msg": "Token has been revoked"}), 401
+        return jsonify({"success": False, "message": "Token has been revoked"}), 401
+
+    # Response for expired tokens
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({"success": False, "message": "Token has expired"}), 401
+
+    # Response for invalid tokens
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        return jsonify({"success": False, "message": f"Invalid token: {str(error)}"}), 401
+
+    # Response for missing tokens
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        return jsonify({"success": False, "message": "Authorization token is missing"}), 401
+
+    # Response for tokens that failed to decode
+    @jwt.decode_error_loader
+    def decode_error_callback(jwt_header, jwt_payload):
+        return jsonify({"success": False, "message": "Token decoding failed"}), 401
 
     return app
 

@@ -9,6 +9,7 @@ class Config:
     All database settings are loaded from environment variables (.env file)
     """
     SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey123")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY", "supersecretkey123")  # Use SECRET_KEY as fallback
     
     # Database Configuration - Local MySQL on Azure VM
     # For local MySQL on same VM, use: localhost or 127.0.0.1
