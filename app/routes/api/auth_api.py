@@ -39,7 +39,21 @@ def login():
 
             stored_hash, status = row
 
-            if not bcrypt.check_password_hash(stored_hash, password):
+            # Validate that stored_hash is a valid bcrypt hash
+            if not stored_hash:
+                return jsonify({"success": False, "message": "Invalid credentials"}), 401
+            
+            # Check if it's a valid bcrypt hash format (starts with $2a$, $2b$, or $2y$)
+            if not isinstance(stored_hash, str) or not stored_hash.startswith(('$2a$', '$2b$', '$2y$')):
+                return jsonify({"success": False, "message": "Invalid credentials"}), 401
+
+            # Verify password with error handling
+            try:
+                if not bcrypt.check_password_hash(stored_hash, password):
+                    return jsonify({"success": False, "message": "Invalid credentials"}), 401
+            except ValueError as e:
+                # Handle invalid salt or other bcrypt errors
+                current_app.logger.error(f"Bcrypt verification error for user {username}: {str(e)}")
                 return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
             if status.lower() != "active":
