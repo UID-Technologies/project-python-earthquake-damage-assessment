@@ -67,10 +67,5 @@ def create_app():
     def missing_token_callback(error):
         return jsonify({"success": False, "message": "Authorization token is missing"}), 401
 
-    # Response for tokens that failed to decode
-    @jwt.decode_error_loader
-    def decode_error_callback(jwt_header, jwt_payload):
-        return jsonify({"success": False, "message": "Token decoding failed"}), 401
-
     return app
 
