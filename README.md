@@ -162,9 +162,10 @@ earthquake-damage-assessment-tool-web/
 
 ### Prerequisites
 - Python 3.11+
-- MySQL 8.0+ (or access to AWS RDS)
+- MySQL 8.0+ (local installation on Azure Ubuntu VM)
 - pip package manager
 - Virtual environment support
+- Azure Ubuntu VM (for deployment)
 
 ### Step-by-Step Installation
 
@@ -197,14 +198,21 @@ earthquake-damage-assessment-tool-web/
 5. **Configure Environment Variables**
    Create a `.env` file in the root directory:
    ```env
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_HOST=your_db_host
+   # Database Configuration (Local MySQL on Azure VM)
+   DB_HOST=localhost
    DB_PORT=3306
-   DB_NAME=your_db_name
+   DB_USER=appuser
+   DB_PASSWORD=your_secure_password
+   DB_NAME=appdb
+   
+   # Application Configuration
    SECRET_KEY=your_secret_key_here
    ALGORITHM=HS256
    ACCESS_TOKEN_EXPIRE_MINUTES=60
+   
+   # OpenAI API Configuration (if using AI analysis)
+   OPENAI_API_KEY=your_openai_api_key
+   OPENAI_MODEL=gpt-4o
    ```
 
 6. **Test Database Connection**
@@ -239,11 +247,22 @@ earthquake-damage-assessment-tool-web/
 
 ### Database Configuration
 
-**Current Setup**: AWS RDS (Production)
+**Current Setup**: Local MySQL on Azure Ubuntu VM
 ```
-Region: Asia Pacific (Mumbai - ap-south-1)
-MySQL Version: 8.0.43
-SSL: Supported
+Host: localhost (local MySQL instance on same VM)
+Port: 3306
+MySQL Version: 8.0+
+Authentication: mysql_native_password (recommended)
+SSL: Not required for local connections
+```
+
+**Environment Variables for Local MySQL:**
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=appuser
+DB_PASSWORD=your_secure_password
+DB_NAME=appdb
 ```
 
 ### AI Model Configuration

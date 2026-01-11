@@ -5,9 +5,9 @@ Handles login, signup, logout, and token verification endpoints
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
 from flask_bcrypt import Bcrypt
-import pymysql
 import datetime
 from app.blocklist import BLOCKLIST
+from app.db import get_db
 
 auth_api_bp = Blueprint("auth_api", __name__, url_prefix="/api/auth")
 bcrypt = Bcrypt()
@@ -26,13 +26,7 @@ def login():
     if not username or not password:
         return jsonify({"success": False, "message": "Username and password required"}), 400
 
-    conn = pymysql.connect(
-        host=current_app.config["DB_HOST"],
-        user=current_app.config["DB_USER"],
-        password=current_app.config["DB_PASSWORD"],
-        db=current_app.config["DB_NAME"],
-        port=current_app.config["DB_PORT"]
-    )
+    conn = get_db()
     
     try:
         with conn.cursor() as cursor:
@@ -85,14 +79,7 @@ def signup():
     # Hash password using Flask-Bcrypt
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    conn = pymysql.connect(
-        host=current_app.config["DB_HOST"],
-        user=current_app.config["DB_USER"],
-        password=current_app.config["DB_PASSWORD"],
-        db=current_app.config["DB_NAME"],
-        port=current_app.config["DB_PORT"],
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    conn = get_db()
     
     try:
         with conn.cursor() as cursor:
@@ -144,8 +131,6 @@ def get_current_user():
     """
     Get current user information including name, email, and username
     """
-    from app.db import get_db
-    
     username = get_jwt_identity()
     conn = get_db()
     
