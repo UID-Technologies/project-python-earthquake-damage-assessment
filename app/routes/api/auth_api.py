@@ -37,7 +37,8 @@ def login():
             if row is None:
                 return jsonify({"success": False, "message": "User not found"}), 404
 
-            stored_hash, status = row
+            stored_hash = row.get('password')
+            status = row.get('status')
 
             # Validate that stored_hash exists and is not None
             if not stored_hash:
