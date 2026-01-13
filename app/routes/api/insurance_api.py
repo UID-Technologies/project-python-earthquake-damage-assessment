@@ -262,11 +262,12 @@ def submit_final_claim():
         insurance_code = data.get('insurance_code')
         policy_number = data.get('policy_number')
         claims_code = data.get('claims_code')
-        # Truncate text fields to prevent database errors (VARCHAR typically max 255-500 chars)
-        claim_details = (data.get('claim_details', '') or '')[:1000]
-        time_of_loss = (data.get('time_of_loss', '') or '')[:255]
-        situation_of_loss = (data.get('situation_of_loss', '') or '')[:1000]
-        cause_of_loss = (data.get('cause_of_loss', '') or '')[:1000]
+        # Truncate text fields to prevent database errors (VARCHAR typically 255 chars)
+        # Convert to string and truncate to safe limits
+        claim_details = str(data.get('claim_details', '') or '')[:250]
+        time_of_loss = str(data.get('time_of_loss', '') or '')[:100]
+        situation_of_loss = str(data.get('situation_of_loss', '') or '')[:500]
+        cause_of_loss = str(data.get('cause_of_loss', '') or '')[:500]
         
         # Step 3: Property details
         property_type = data.get('property_type')
@@ -321,6 +322,12 @@ def submit_final_claim():
                     return jsonify({"success": False, "error": "Unauthorized - claim belongs to another user"}), 403
             else:
                 # Create new claim record
+                # Final safety truncation before insert (ensure all strings are within limits)
+                claim_details_safe = str(claim_details)[:250] if claim_details else ''
+                time_of_loss_safe = str(time_of_loss)[:100] if time_of_loss else ''
+                situation_of_loss_safe = str(situation_of_loss)[:500] if situation_of_loss else ''
+                cause_of_loss_safe = str(cause_of_loss)[:500] if cause_of_loss else ''
+                
                 sql_claim = """
                     INSERT INTO claims
                     (user_id, claims_code, insurance_id, claim_details, time_of_loss, 
@@ -328,8 +335,8 @@ def submit_final_claim():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 'inactive', %s)
                 """
                 cursor.execute(sql_claim, (
-                    user_id, claims_code, insurance_code, claim_details,
-                    time_of_loss, situation_of_loss, cause_of_loss, policy_number, user_id
+                    user_id, claims_code, insurance_code, claim_details_safe,
+                    time_of_loss_safe, situation_of_loss_safe, cause_of_loss_safe, policy_number, user_id
                 ))
                 claims_id = cursor.lastrowid
             

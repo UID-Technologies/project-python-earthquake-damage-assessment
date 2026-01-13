@@ -100,11 +100,12 @@ def submit_insurance_claims():
     user_id = data.get('user_id')
     claims_code = data.get('claims_code')
     insurance_id = data.get('insurance_id')
-    # Truncate text fields to prevent database errors (VARCHAR typically max 255-500 chars)
-    claim_details = (data.get('claim_details') or '')[:1000]
-    time_of_loss = (data.get('time_of_loss') or '')[:255]
-    situation_of_loss = (data.get('situation_of_loss') or '')[:1000]
-    cause_of_loss = (data.get('cause_of_loss') or '')[:1000]
+    # Truncate text fields to prevent database errors (VARCHAR typically 255 chars)
+    # Convert to string and truncate to safe limits
+    claim_details = str(data.get('claim_details') or '')[:250]
+    time_of_loss = str(data.get('time_of_loss') or '')[:100]
+    situation_of_loss = str(data.get('situation_of_loss') or '')[:500]
+    cause_of_loss = str(data.get('cause_of_loss') or '')[:500]
     policy_number = data.get('policy_number')
 
     # Better validation with specific error messages
@@ -125,14 +126,20 @@ def submit_insurance_claims():
             if existing:
                 return jsonify({"success": False, "error": "Claims code already exists. Please use a different code."}), 400
             
+            # Final safety truncation before insert (ensure all strings are within limits)
+            claim_details_safe = str(claim_details)[:250] if claim_details else ''
+            time_of_loss_safe = str(time_of_loss)[:100] if time_of_loss else ''
+            situation_of_loss_safe = str(situation_of_loss)[:500] if situation_of_loss else ''
+            cause_of_loss_safe = str(cause_of_loss)[:500] if cause_of_loss else ''
+            
             sql = """
                 INSERT INTO claims
                 (user_id, claims_code, insurance_id, claim_details, time_of_loss, situation_of_loss, cause_of_loss, is_active, status, created_by, policy_number)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
-                user_id, claims_code, insurance_id, claim_details,
-                time_of_loss, situation_of_loss, cause_of_loss,
+                user_id, claims_code, insurance_id, claim_details_safe,
+                time_of_loss_safe, situation_of_loss_safe, cause_of_loss_safe,
                 1, 'inactive', user_id, policy_number
             ))
             conn.commit()
