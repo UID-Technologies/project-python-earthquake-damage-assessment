@@ -43,7 +43,8 @@ def submit_insurance_detail():
     insurance_type = data.get('insurance_type')
     insured = data.get('insured')
     occupation = data.get('occupation')
-    insurance_details = data.get('insurance_details')
+    # Truncate text fields to prevent database errors
+    insurance_details = (data.get('insurance_details') or '')[:2000]
     status = data.get('status')
 
     # Validate mandatory fields
@@ -99,10 +100,11 @@ def submit_insurance_claims():
     user_id = data.get('user_id')
     claims_code = data.get('claims_code')
     insurance_id = data.get('insurance_id')
-    claim_details = data.get('claim_details')
-    time_of_loss = data.get('time_of_loss')
-    situation_of_loss = data.get('situation_of_loss')
-    cause_of_loss = data.get('cause_of_loss')
+    # Truncate text fields to prevent database errors (VARCHAR typically max 255-500 chars)
+    claim_details = (data.get('claim_details') or '')[:1000]
+    time_of_loss = (data.get('time_of_loss') or '')[:255]
+    situation_of_loss = (data.get('situation_of_loss') or '')[:1000]
+    cause_of_loss = (data.get('cause_of_loss') or '')[:1000]
     policy_number = data.get('policy_number')
 
     # Better validation with specific error messages

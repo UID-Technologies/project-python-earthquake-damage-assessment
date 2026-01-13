@@ -262,10 +262,11 @@ def submit_final_claim():
         insurance_code = data.get('insurance_code')
         policy_number = data.get('policy_number')
         claims_code = data.get('claims_code')
-        claim_details = data.get('claim_details', '')
-        time_of_loss = data.get('time_of_loss', '')
-        situation_of_loss = data.get('situation_of_loss', '')
-        cause_of_loss = data.get('cause_of_loss', '')
+        # Truncate text fields to prevent database errors (VARCHAR typically max 255-500 chars)
+        claim_details = (data.get('claim_details', '') or '')[:1000]
+        time_of_loss = (data.get('time_of_loss', '') or '')[:255]
+        situation_of_loss = (data.get('situation_of_loss', '') or '')[:1000]
+        cause_of_loss = (data.get('cause_of_loss', '') or '')[:1000]
         
         # Step 3: Property details
         property_type = data.get('property_type')
