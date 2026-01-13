@@ -442,7 +442,10 @@ def damaged_property_calculation():
             cursor.execute(sql_user_id, (claims_id,))
             result = cursor.fetchone()
             
-            user_id = result.get('user_id') if result else 'NULL'
+            if not result:
+                return jsonify({"success": False, "message": "Claim not found"}), 404
+            
+            user_id = result.get('user_id')
             
             sql = """
                 SELECT 
