@@ -279,7 +279,7 @@
 <script src="{{ url_for('static', filename='js/auth_check.js') }}"></script>
 
 <script>
-  async function fetchUserId() {
+  async function fetchUsername() {
     const token = localStorage.getItem('token');
     if (!token) {
       console.log("No token, user not logged in");
@@ -292,24 +292,27 @@
     });
     if (response.ok) {
       const data = await response.json();
-      return data.user_id;
+      if (data.success && data.user) {
+        return data.user.username;
+      }
+      return null;
     } else {
-      console.error('Failed to get user ID:', response.status);
+      console.error('Failed to get user:', response.status);
       return null;
     }
   }
 
-  async function setUserId() {
-    const userId = await fetchUserId();
-    if (userId) {
-      document.getElementById('user_id').value = userId;
+  async function setUsername() {
+    const username = await fetchUsername();
+    if (username) {
+      document.getElementById('user_id').value = username;
     } else {
-      console.warn('Could not set user_id');
+      console.warn('Could not set username - user may not be logged in');
     }
   }
 
-  // Set user ID when page loads
-  setUserId();
+  // Set username when page loads
+  setUsername();
 
   // Form submission handling
   document.getElementById('insuranceForm').addEventListener('submit', function(e) {
